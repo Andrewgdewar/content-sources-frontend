@@ -2,6 +2,8 @@ import { render } from '@testing-library/react';
 import { ReactQueryTestWrapper, testRepositoryParamsResponse } from '../../testingHelpers';
 import ContentListTable from './ContentListTable';
 import { useContentListQuery, useRepositoryParams } from '../../services/Content/ContentQueries';
+import { act } from 'react-dom/test-utils';
+import AddContent from './components/AddContent/AddContent';
 
 jest.mock('../../services/Content/ContentQueries', () => ({
   useRepositoryParams: jest.fn(),
@@ -16,6 +18,10 @@ jest.mock('../../middleware/AppContext', () => ({
   useAppContext: () => ({}),
 }));
 
+jest.mock('./components/AddContent/AddContent');
+
+(AddContent as jest.Mock).mockImplementation(() => 'Add Content');
+
 it('expect ContentListTable to render with a loading skeleton', () => {
   (useRepositoryParams as jest.Mock).mockImplementation(() => ({ isLoading: false }));
   (useContentListQuery as jest.Mock).mockImplementation(() => ({ isLoading: false }));
@@ -26,8 +32,10 @@ it('expect ContentListTable to render with a loading skeleton', () => {
     </ReactQueryTestWrapper>,
   );
 
-  expect(queryByText('No custom repositories')).toBeInTheDocument();
-  expect(queryByText('To get started, create a custom repository')).toBeInTheDocument();
+  act(() => {
+    expect(queryByText('No custom repositories')).toBeInTheDocument();
+    expect(queryByText('To get started, create a custom repository')).toBeInTheDocument();
+  });
 });
 
 it('Render a loading state', () => {

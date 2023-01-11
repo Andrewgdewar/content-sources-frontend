@@ -1,16 +1,19 @@
 import { render } from '@testing-library/react';
 import { ReactQueryTestWrapper } from '../../../testingHelpers';
 import EmptyTableState from './EmptyTableState';
+import AddContent from './AddContent/AddContent';
 
+jest.mock('./AddContent/AddContent');
 jest.mock('../../../services/Notifications/Notifications', () => ({
   useNotification: () => ({ notify: () => null }),
 }));
-
 jest.mock('../../../middleware/AppContext', () => ({
   useAppContext: () => ({}),
 }));
 
-it('Render with notFiltered is set to "true"', () => {
+(AddContent as jest.Mock).mockImplementation(() => 'Add Content');
+
+it('Render with notFiltered is set to "true"', async () => {
   const { queryByText } = render(
     <ReactQueryTestWrapper>
       <EmptyTableState notFiltered clearFilters={() => null} />

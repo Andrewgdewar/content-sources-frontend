@@ -37,7 +37,7 @@ const PackageCount = ({ rowData }: Props) => {
       <Tooltip isContentLeftAligned content='Repository is invalid.'>
         <Text className={classes.text}>N/A</Text>
       </Tooltip>
-    )
+    );
   }
 
   return (

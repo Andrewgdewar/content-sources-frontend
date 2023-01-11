@@ -1,4 +1,4 @@
-import { act, fireEvent, render } from '@testing-library/react';
+import { act, fireEvent, render, waitFor } from '@testing-library/react';
 import {
   defaultValidationErrorData,
   passingValidationErrorData,
@@ -37,7 +37,7 @@ const passingValidationMetaDataSigNotPresent = [
   },
 ];
 
-it('expect AddContent button to render and be disabled', () => {
+it('expect AddContent button to render and be disabled', async () => {
   (useValidateContentList as jest.Mock).mockImplementation(() => ({
     isLoading: false,
     mutateAsync: async () => defaultValidationErrorData,
@@ -50,8 +50,10 @@ it('expect AddContent button to render and be disabled', () => {
   );
 
   const button = queryByText('Add repositories');
-  expect(button).toBeInTheDocument();
-  expect(button).toHaveAttribute('disabled');
+  await waitFor(() => {
+    expect(button).toBeInTheDocument();
+    expect(button).toHaveAttribute('disabled');
+  });
 });
 
 it('expect AddContent modal to open/close successfully', async () => {
