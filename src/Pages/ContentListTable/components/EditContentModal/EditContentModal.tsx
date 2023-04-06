@@ -34,7 +34,7 @@ import {
 import { RepositoryParamsResponse } from '../../../../services/Content/ContentApi';
 import DropdownSelect from '../../../../components/DropdownSelect/DropdownSelect';
 import { useQueryClient } from 'react-query';
-import { isValidURL, makeValidationSchema, mapValidationData } from '../AddContent/helpers';
+import { failedFileUpload, isValidURL, makeValidationSchema, mapValidationData, maxUploadSize } from '../AddContent/helpers';
 import ContentValidity from '../AddContent/components/ContentValidity';
 import {
   EditContentProps,
@@ -45,6 +45,7 @@ import {
 import { isEmpty, isEqual } from 'lodash';
 import ConditionalTooltip from '../../../../components/ConditionalTooltip/ConditionalTooltip';
 import { useAppContext } from '../../../../middleware/AppContext';
+import { useNotification } from '../../../../services/Notifications/Notifications';
 
 const green = global_success_color_100.value;
 
@@ -126,7 +127,6 @@ const EditContentModal = ({ values, open, setClosed }: EditContentProps) => {
     updatedData[index] = value;
     setGpgKeyList(updatedData);
   };
-
   const { fetchGpgKey } = useFetchGpgKey();
 
   const debouncedGpgKeyList = useDebounce(gpgKeyList, 300);
@@ -301,6 +301,8 @@ const EditContentModal = ({ values, open, setClosed }: EditContentProps) => {
       versions: valueToUpdate,
     });
   };
+
+  const { notify } = useNotification();
 
   return (
     <Modal
@@ -536,8 +538,8 @@ const EditContentModal = ({ values, open, setClosed }: EditContentProps) => {
                         onTextChange={(value) => updateGpgKey(index, value)}
                         onClearClick={() => updateGpgKey(index, '')}
                         dropzoneProps={{
-                          maxSize: 8096,
-                          onDropRejected: (e) => console.log('onDropRejected', e),
+                            maxSize: maxUploadSize,
+                            onDropRejected: (files) => failedFileUpload(files, notify),
                         }}
                         allowEditingUploadedText
                         browseButtonText='Upload'

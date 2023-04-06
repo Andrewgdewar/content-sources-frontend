@@ -30,8 +30,11 @@ import {
   mapValidationData,
   makeValidationSchema,
   FormikValues,
+  maxUploadSize,
+  failedFileUpload,
 } from './helpers';
 import useDebounce from '../../../../services/useDebounce';
+import { useNotification } from '../../../../services/Notifications/Notifications';
 import ContentValidity from './components/ContentValidity';
 import {
   REPOSITORY_PARAMS_KEY,
@@ -104,6 +107,7 @@ const useStyles = createUseStyles({
     padding: '8px 0px 0px !important',
   },
 });
+
 
 const defaultValues: FormikValues = {
   name: '',
@@ -365,6 +369,8 @@ const AddContent = ({ isDisabled: isButtonDisabled }: Props) => {
       versions: valueToUpdate,
     });
   };
+
+ const { notify } = useNotification();
 
   return (
     <>
@@ -635,8 +641,8 @@ const AddContent = ({ isDisabled: isButtonDisabled }: Props) => {
                             onTextChange={(value) => updateGpgKey(index, value)}
                             onClearClick={() => updateGpgKey(index, '')}
                             dropzoneProps={{
-                              maxSize: 8096,
-                              onDropRejected: (e) => console.log('onDropRejected', e),
+                              maxSize: maxUploadSize,
+                              onDropRejected: (files) => failedFileUpload(files, notify),
                             }}
                             allowEditingUploadedText
                             browseButtonText='Upload'

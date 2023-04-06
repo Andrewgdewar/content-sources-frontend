@@ -30,6 +30,10 @@ jest.mock('../../../../middleware/AppContext', () => ({
   useAppContext: () => ({ rbac: { read: true, write: true } }),
 }));
 
+jest.mock('../../../../services/Notifications/Notifications', () => ({
+  useNotification: () => ({ notify: () => null }),
+}));
+
 const passingValidationMetaDataSigNotPresent = [
   {
     ...passingValidationErrorData[0],
@@ -87,9 +91,9 @@ it('expect "name" input to show a validation error', async () => {
   }));
 
   const { queryByText, queryByPlaceholderText } = render(
-    <ReactQueryTestWrapper>
-      <AddContent />
-    </ReactQueryTestWrapper>,
+      <ReactQueryTestWrapper>
+        <AddContent />
+      </ReactQueryTestWrapper>,
   );
 
   const button = queryByText('Add repositories');

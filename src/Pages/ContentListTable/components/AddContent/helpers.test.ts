@@ -1,5 +1,5 @@
 import { ValidationResponse } from '../../../../services/Content/ContentApi';
-import { REGEX_URL, isValidURL, mapFormikToAPIValues, mapValidationData } from './helpers';
+import { REGEX_URL, failedFileUpload, isValidURL, mapFormikToAPIValues, mapValidationData } from './helpers';
 
 it('REGEX_URL', () => {
   const regex = new RegExp(REGEX_URL);
@@ -70,3 +70,22 @@ it('mapValidationData', () => {
   expect(mapValidationData([], [])).toEqual([]);
   expect(mapValidationData(validationData, formikErrors)).toEqual(success);
 });
+
+it('Notifies on file upload failure due to size', () => {
+    const notif = jest.fn((payload) => payload);
+    const f = new File([''], 'filename', { type: 'text/html'});
+    Object.defineProperty(f, 'size', { value: 9000});
+
+    failedFileUpload([f], notif)
+    expect(notif.mock.calls).toHaveLength(1)
+    expect(notif.mock.calls[0][0].description).toMatch(/file is larger than/)
+})
+
+it('Notifies on file upload failure due to too many files', () => {
+    const notif = jest.fn((payload) => payload);
+    const f = new File([''], 'filename', { type: 'text/html'});
+
+    failedFileUpload([f, f], notif)
+    expect(notif.mock.calls).toHaveLength(1)
+    expect(notif.mock.calls[0][0].description).toMatch(/Only a single file upload is supported/)
+})

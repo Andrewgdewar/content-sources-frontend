@@ -21,7 +21,7 @@ objects:
       navItems:
         - appId: "content-sources"
           title: "Repositories"
-          href: "/insights/content"
+          href: "/settings/content"
           product: "Content"
       module:
         manifestLocation: "/apps/content-sources/fed-mods.json"
