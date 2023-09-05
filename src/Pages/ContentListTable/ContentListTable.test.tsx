@@ -10,6 +10,8 @@ jest.mock('../../services/Content/ContentQueries', () => ({
   useAddContentQuery: () => ({ isLoading: false }),
   useValidateContentList: () => ({ isLoading: false }),
   useDeleteContentItemMutate: () => ({ isLoading: false }),
+  useBulkDeleteContentItemMutate: () => ({ isLoading: false }),
+  useIntrospectRepositoryMutate: () => ({ isLoading: false }),
   useFetchGpgKey: () => ({ fetchGpgKey: () => '' }),
 }));
 
@@ -18,6 +20,11 @@ jest.mock('../../middleware/AppContext', () => ({
 }));
 
 jest.mock('./components/AddContent/AddContent');
+
+jest.mock('react-router-dom', () => ({
+  useNavigate: jest.fn(),
+  Outlet: () => <></>,
+}));
 
 (AddContent as jest.Mock).mockImplementation(() => 'Add Content');
 

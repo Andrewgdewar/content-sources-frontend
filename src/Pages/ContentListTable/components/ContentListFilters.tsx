@@ -1,4 +1,4 @@
-import { ReactElement, useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Button,
   Chip,
@@ -16,17 +16,21 @@ import Hide from '../../../components/Hide/Hide';
 import { FilterData, RepositoryParamsResponse } from '../../../services/Content/ContentApi';
 import { useQueryClient } from 'react-query';
 import { REPOSITORY_PARAMS_KEY } from '../../../services/Content/ContentQueries';
-import useDebounce from '../../../services/useDebounce';
-import AddContent from './AddContent/AddContent';
+import useDebounce from '../../../Hooks/useDebounce';
 import { createUseStyles } from 'react-jss';
 import { isEmpty } from 'lodash';
 import { useAppContext } from '../../../middleware/AppContext';
 import ConditionalTooltip from '../../../components/ConditionalTooltip/ConditionalTooltip';
+import { useNavigate } from 'react-router-dom';
+import DeleteKebab from '../../../components/DeleteKebab/DeleteKebab';
 
 interface Props {
   isLoading?: boolean;
   setFilterData: (filterData: FilterData) => void;
   filterData: FilterData;
+  atLeastOneRepoChecked: boolean;
+  numberOfReposChecked: number;
+  deleteCheckedRepos: () => void;
 }
 
 const useStyles = createUseStyles({
@@ -48,15 +52,28 @@ const useStyles = createUseStyles({
     left: '-5px',
     pointerEvents: 'none',
   },
+  // Needed to fix styling when "Add repositories" button is disabled
+  repositoryActions: {
+    display: 'flex',
+    flexDirection: 'row',
+  },
 });
 
 const statusValues = ['Invalid', 'Pending', 'Unavailable', 'Valid'];
 export type Filters = 'Name/URL' | 'Version' | 'Architecture' | 'Status';
 
-const ContentListFilters = ({ isLoading, setFilterData, filterData }: Props) => {
+const ContentListFilters = ({
+  isLoading,
+  setFilterData,
+  filterData,
+  atLeastOneRepoChecked,
+  numberOfReposChecked,
+  deleteCheckedRepos,
+}: Props) => {
   const classes = useStyles();
   const { rbac } = useAppContext();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const filters = ['Name/URL', 'Version', 'Architecture', 'Status'];
   const [filterType, setFilterType] = useState<Filters>('Name/URL');
   const [versionNamesLabels, setVersionNamesLabels] = useState({});
@@ -154,7 +171,7 @@ const ContentListFilters = ({ isLoading, setFilterData, filterData }: Props) => 
     }
   }, [distribution_arches, distribution_versions]);
 
-  const getSelectionByType = (): ReactElement => {
+  const Filter = useMemo(() => {
     switch (filterType) {
       case 'Name/URL':
         return (
@@ -174,6 +191,7 @@ const ContentListFilters = ({ isLoading, setFilterData, filterData }: Props) => 
       case 'Version':
         return (
           <DropdownSelect
+            toggleAriaLabel='filter version'
             toggleId='versionSelect'
             ouiaId='filter_version'
             isDisabled={isLoading}
@@ -187,6 +205,7 @@ const ContentListFilters = ({ isLoading, setFilterData, filterData }: Props) => 
       case 'Architecture':
         return (
           <DropdownSelect
+            toggleAriaLabel='filter architecture'
             toggleId='archSelect'
             ouiaId='filter_arch'
             isDisabled={isLoading}
@@ -200,6 +219,7 @@ const ContentListFilters = ({ isLoading, setFilterData, filterData }: Props) => 
       case 'Status':
         return (
           <DropdownSelect
+            toggleAriaLabel='filter status'
             toggleId='statusSelect'
             ouiaId='filter_status'
             isDisabled={isLoading}
@@ -213,7 +233,16 @@ const ContentListFilters = ({ isLoading, setFilterData, filterData }: Props) => 
       default:
         return <></>;
     }
-  };
+  }, [
+    filterType,
+    isLoading,
+    searchQuery,
+    versionNamesLabels,
+    selectedVersions,
+    archNamesLabels,
+    selectedArches,
+    selectedStatuses,
+  ]);
 
   return (
     <Flex>
@@ -232,16 +261,35 @@ const ContentListFilters = ({ isLoading, setFilterData, filterData }: Props) => 
               toggleIcon={<FilterIcon />}
             />
           </FlexItem>
-          <FlexItem>{getSelectionByType()}</FlexItem>
+          <FlexItem>{Filter}</FlexItem>
         </InputGroup>
       </FlexItem>
-      <FlexItem>
+      <FlexItem className={classes.repositoryActions}>
         <ConditionalTooltip
           content='You do not have the required permissions to perform this action.'
           show={!rbac?.write}
           setDisabled
         >
-          <AddContent isDisabled={isLoading} />
+          <Button
+            id='createContentSourceButton'
+            ouiaId='create_content_source'
+            variant='primary'
+            isDisabled={isLoading}
+            onClick={() => navigate('add-repository')}
+          >
+            Add repositories
+          </Button>
+        </ConditionalTooltip>
+        <ConditionalTooltip
+          content='You do not have the required permissions to perform this action.'
+          show={!rbac?.write}
+          setDisabled
+        >
+          <DeleteKebab
+            atLeastOneRepoChecked={atLeastOneRepoChecked}
+            numberOfReposChecked={numberOfReposChecked}
+            deleteCheckedRepos={deleteCheckedRepos}
+          />
         </ConditionalTooltip>
       </FlexItem>
       <Hide

@@ -26,7 +26,7 @@ objects:
       module:
         manifestLocation: "/apps/content-sources/fed-mods.json"
         modules:
-          - id: "content-sources"
+          - id: 'insights-content-sources' # This should likely match: https://github.com/RedHatInsights/cloud-services-config/blob/ci-beta/chrome/fed-modules.json#L776
             module: "./RootApp"
             routes:
               - pathname: /insights/content  # TODO ensure this matches routes/webpack config?

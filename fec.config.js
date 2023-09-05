@@ -4,7 +4,7 @@ module.exports = {
   proxyVerbose: true,
   interceptChromeConfig: true,
   sassPrefix: '.contentSources',
-  appUrl: '/insights/content',
+  appUrl: '/settings/content',
   routes: {
     '/api/content-sources/': { host: 'http://localhost:8000' },
   },

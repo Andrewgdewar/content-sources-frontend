@@ -1,8 +1,8 @@
 import { AlertVariant } from '@patternfly/react-core';
 import { useState } from 'react';
 import { QueryClient, useMutation, useQuery } from 'react-query';
+import { cloneDeep } from 'lodash';
 
-import { useNotification } from './../Notifications/Notifications';
 import {
   ContentListResponse,
   deleteContentListItem,
@@ -18,35 +18,63 @@ import {
   getGpgKey,
   PackagesResponse,
   getPackages,
-  ErrorResponse,
   getPopularRepositories,
   PopularRepositoriesResponse,
   CreateContentRequestResponse,
   ContentItem,
+  introspectRepository,
+  IntrospectRepositoryRequestItem,
+  fetchContentItem,
+  deleteContentListItems,
+  Meta,
+  ErrorResponse,
+  getSnapshotList,
+  SnapshotListResponse,
 } from './ContentApi';
+import { ADMIN_TASK_LIST_KEY } from '../AdminTasks/AdminTaskQueries';
+import useErrorNotification from '../../Hooks/useErrorNotification';
+import useNotification from '../../Hooks/useNotification';
 
 export const CONTENT_LIST_KEY = 'CONTENT_LIST_KEY';
 export const POPULAR_REPOSITORIES_LIST_KEY = 'POPULAR_REPOSITORIES_LIST_KEY';
 export const REPOSITORY_PARAMS_KEY = 'REPOSITORY_PARAMS_KEY';
 export const CREATE_PARAMS_KEY = 'CREATE_PARAMS_KEY';
 export const PACKAGES_KEY = 'PACKAGES_KEY';
+export const LIST_SNAPSHOTS_KEY = 'PACKAGES_KEY';
+export const CONTENT_ITEM_KEY = 'CONTENT_ITEM_KEY';
 
 const CONTENT_LIST_POLLING_TIME = 15000; // 15 seconds
+
+export const useFetchContent = (uuids: string[]) => {
+  const errorNotifier = useErrorNotification();
+  return useQuery<ContentItem>([CONTENT_ITEM_KEY, ...uuids], () => fetchContentItem(uuids[0]), {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onError: (err: any) =>
+      errorNotifier('Unable to find associated repository.', 'An error occurred', err),
+    keepPreviousData: true,
+    staleTime: 20000,
+  });
+};
 
 export const usePopularRepositoriesQuery = (
   page: number,
   limit: number,
   filterData?: Partial<FilterData>,
   sortBy?: string,
-) =>
-  useQuery<PopularRepositoriesResponse>(
+) => {
+  const errorNotifier = useErrorNotification();
+  return useQuery<PopularRepositoriesResponse>(
     [POPULAR_REPOSITORIES_LIST_KEY, page, limit, sortBy, ...Object.values(filterData || {})], // NOTE: Update this if larger list!!!!
     () => getPopularRepositories(page, limit, filterData, sortBy),
     {
       keepPreviousData: true,
       staleTime: 20000,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      onError: (err: any) =>
+        errorNotifier('Unable to get popular repositories list', 'An error occurred', err),
     },
   );
+};
 
 export const useContentListQuery = (
   page: number,
@@ -56,14 +84,16 @@ export const useContentListQuery = (
 ) => {
   const [polling, setPolling] = useState(false);
   const [pollCount, setPollCount] = useState(0);
-
+  const errorNotifier = useErrorNotification();
   return useQuery<ContentListResponse>(
     // Below MUST match the "contentListKeyArray" seen below in the useDeleteContent.
     [CONTENT_LIST_KEY, page, limit, sortBy, ...Object.values(filterData)],
     () => getContentList(page, limit, filterData, sortBy),
     {
       onSuccess: (data) => {
-        const containsPending = data?.data?.some(({ status }) => status === 'Pending');
+        const containsPending = data?.data?.some(
+          ({ status }) => status === 'Pending' || status === '',
+        );
         if (polling && containsPending) {
           // Count each consecutive time polling occurs
           setPollCount(pollCount + 1);
@@ -79,9 +109,10 @@ export const useContentListQuery = (
         // This sets the polling state based whether the data contains any "Pending" status
         return setPolling(containsPending);
       },
-      onError: () => {
+      onError: (err) => {
         setPolling(false);
         setPollCount(0);
+        errorNotifier('Unable to get repositories list', 'An error occurred', err);
       },
       refetchInterval: polling ? CONTENT_LIST_POLLING_TIME : undefined,
       refetchIntervalInBackground: false, // This prevents endless polling when our app isn't the focus tab in a browser
@@ -93,6 +124,7 @@ export const useContentListQuery = (
 };
 
 export const useAddContentQuery = (queryClient: QueryClient, request: CreateContentRequest) => {
+  const errorNotifier = useErrorNotification();
   const { notify } = useNotification();
   return useMutation(() => AddContentListItems(request.filter((item) => !!item)), {
     onSuccess: (data: CreateContentRequestResponse) => {
@@ -110,33 +142,12 @@ export const useAddContentQuery = (queryClient: QueryClient, request: CreateCont
       });
 
       queryClient.invalidateQueries(CONTENT_LIST_KEY);
+      queryClient.invalidateQueries(ADMIN_TASK_LIST_KEY);
       queryClient.invalidateQueries(POPULAR_REPOSITORIES_LIST_KEY);
     },
-    onError: (err: { response?: { data: ErrorResponse } }) => {
-      let description = 'An error occurred';
-
-      switch (typeof err?.response?.data) {
-        case 'string':
-          description = err?.response?.data;
-          break;
-        case 'object':
-          // Only show the first error
-          err?.response?.data.errors?.find(({ detail }) => {
-            if (detail) {
-              description = detail;
-              return true;
-            }
-          })?.detail;
-          break;
-        default:
-          break;
-      }
-
-      notify({
-        variant: AlertVariant.danger,
-        title: 'Error adding items to content list',
-        description,
-      });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onError: (err: any) => {
+      errorNotifier('Error adding items to content list', 'An error occurred', err);
     },
   });
 };
@@ -148,6 +159,7 @@ export const useAddPopularRepositoryQuery = (
   perPage: number,
   filterData?: FilterData,
 ) => {
+  const errorNotifier = useErrorNotification();
   const { notify } = useNotification();
   const popularRepositoriesKeyArray = [
     POPULAR_REPOSITORIES_LIST_KEY,
@@ -188,6 +200,7 @@ export const useAddPopularRepositoryQuery = (
       });
 
       queryClient.invalidateQueries(CONTENT_LIST_KEY);
+      queryClient.invalidateQueries(ADMIN_TASK_LIST_KEY);
       queryClient.invalidateQueries(POPULAR_REPOSITORIES_LIST_KEY);
     },
     onError: (err, _newData, context) => {
@@ -196,18 +209,14 @@ export const useAddPopularRepositoryQuery = (
           previousData: PopularRepositoriesResponse;
         };
         queryClient.setQueryData(popularRepositoriesKeyArray, previousData);
-        const error = err as Error; // Forced Type
-        notify({
-          variant: AlertVariant.danger,
-          title: 'Error deleting item from popularRepo',
-          description: error?.message,
-        });
       }
+      errorNotifier('Error adding item from popularRepo', 'An error occurred', err);
     },
   });
 };
 
 export const useEditContentQuery = (queryClient: QueryClient, request: EditContentRequest) => {
+  const errorNotifier = useErrorNotification();
   const { notify } = useNotification();
   return useMutation(() => EditContentListItem(request[0]), {
     onSuccess: () => {
@@ -215,48 +224,23 @@ export const useEditContentQuery = (queryClient: QueryClient, request: EditConte
         variant: AlertVariant.success,
         title: `Successfully edited ${request.length} ${request.length > 1 ? 'items' : 'item'}`,
       });
+
       queryClient.invalidateQueries(CONTENT_LIST_KEY);
+      queryClient.invalidateQueries(ADMIN_TASK_LIST_KEY);
       queryClient.invalidateQueries(POPULAR_REPOSITORIES_LIST_KEY);
     },
-    onError: (err: { response?: { data: ErrorResponse } }) => {
-      let description = 'An error occurred';
-
-      switch (typeof err?.response?.data) {
-        case 'string':
-          description = err?.response?.data;
-          break;
-        case 'object':
-          // Only show the first error
-          err?.response?.data.errors?.find(({ detail }) => {
-            if (detail) {
-              description = detail;
-              return true;
-            }
-          })?.detail;
-          break;
-        default:
-          break;
-      }
-
-      notify({
-        variant: AlertVariant.danger,
-        title: 'Error editing items on content list',
-        description,
-      });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onError: (err: any) => {
+      errorNotifier('Error editing items on content list', 'An error occurred', err);
     },
   });
 };
 
 export const useValidateContentList = () => {
-  const { notify } = useNotification();
+  const errorNotifier = useErrorNotification();
   return useMutation((request: CreateContentRequest) => validateContentListItems(request), {
     onError: (err) => {
-      const error = err as Error; // Forced Type
-      notify({
-        variant: AlertVariant.danger,
-        title: 'Error validating form fields',
-        description: error?.message,
-      });
+      errorNotifier('Error validating form fields', 'An error occurred', err);
     },
   });
 };
@@ -274,7 +258,7 @@ export const useDeletePopularRepositoryMutate = (
     undefined,
     ...Object.values(filterData || {}),
   ];
-  const { notify } = useNotification();
+  const errorNotifier = useErrorNotification();
   return useMutation(deleteContentListItem, {
     onMutate: async (uuid: string) => {
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
@@ -297,22 +281,19 @@ export const useDeletePopularRepositoryMutate = (
     },
     onSuccess: () => {
       queryClient.invalidateQueries(CONTENT_LIST_KEY);
+      queryClient.invalidateQueries(ADMIN_TASK_LIST_KEY);
       queryClient.invalidateQueries(POPULAR_REPOSITORIES_LIST_KEY);
     },
     // If the mutation fails, use the context returned from onMutate to roll back
-    onError: (err, _newData, context) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onError: (err: any, _newData, context) => {
       if (context) {
         const { previousData } = context as {
           previousData: PopularRepositoriesResponse;
         };
         queryClient.setQueryData(popularRepositoriesKeyArray, previousData);
-        const error = err as Error; // Forced Type
-        notify({
-          variant: AlertVariant.danger,
-          title: 'Error deleting item from popularRepo',
-          description: error?.message,
-        });
       }
+      errorNotifier('Unable to delete the given repository.', 'An error occurred', err);
     },
   });
 };
@@ -332,7 +313,7 @@ export const useDeleteContentItemMutate = (
     sortString,
     ...Object.values(filterData || {}),
   ];
-  const { notify } = useNotification();
+  const errorNotifier = useErrorNotification();
   return useMutation(deleteContentListItem, {
     onMutate: async (uuid: string) => {
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
@@ -368,22 +349,89 @@ export const useDeleteContentItemMutate = (
         return data;
       });
       queryClient.invalidateQueries(CONTENT_LIST_KEY);
+      queryClient.invalidateQueries(ADMIN_TASK_LIST_KEY);
       queryClient.invalidateQueries(POPULAR_REPOSITORIES_LIST_KEY);
     },
     // If the mutation fails, use the context returned from onMutate to roll back
-    onError: (err, _newData, context) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onError: (err: any, _newData, context) => {
       if (context) {
         const { previousData } = context as {
           previousData: ContentListResponse;
         };
         queryClient.setQueryData(contentListKeyArray, previousData);
-        const error = err as Error; // Forced Type
-        notify({
-          variant: AlertVariant.danger,
-          title: 'Error deleting item from content list',
-          description: error?.message,
-        });
       }
+      errorNotifier('Unable to delete the given repository.', 'An error occurred', err);
+    },
+  });
+};
+
+export const useBulkDeleteContentItemMutate = (
+  queryClient: QueryClient,
+  selected: Set<string>,
+  page: number,
+  perPage: number,
+  filterData?: FilterData,
+  sortString?: string,
+) => {
+  const uuids = Array.from(selected);
+  // Below MUST match the "useContentList" key found above or updates will fail.
+  const contentListKeyArray = [
+    CONTENT_LIST_KEY,
+    page,
+    perPage,
+    sortString,
+    ...Object.values(filterData || {}),
+  ];
+  const errorNotifier = useErrorNotification();
+  return useMutation(() => deleteContentListItems(uuids), {
+    onMutate: async (checkedRepositories: Set<string>) => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries(contentListKeyArray);
+      // Snapshot the previous value
+      const previousData: Partial<ContentListResponse> =
+        queryClient.getQueryData(contentListKeyArray) || {};
+
+      const newMeta = previousData.meta
+        ? {
+            ...previousData.meta,
+            count: previousData.meta.count ? previousData.meta.count - checkedRepositories.size : 1,
+          }
+        : undefined;
+
+      // Optimistically update to the new value
+      queryClient.setQueryData(contentListKeyArray, () => ({
+        ...previousData,
+        data: previousData.data?.filter((data) => !checkedRepositories.has(data.uuid)),
+        meta: newMeta,
+      }));
+      // Return a context object with the snapshotted value
+      return { previousData, newMeta, queryClient };
+    },
+    onSuccess: (_data, _variables, context) => {
+      // Update all of the existing calls "count" to prevent number jumping on pagination
+      const { newMeta } = context as {
+        newMeta: Meta;
+      };
+      queryClient.setQueriesData(CONTENT_LIST_KEY, (data: Partial<ContentListResponse> = {}) => {
+        if (data?.meta?.count) {
+          data.meta.count = newMeta?.count;
+        }
+        return data;
+      });
+      queryClient.invalidateQueries(CONTENT_LIST_KEY);
+      queryClient.invalidateQueries(ADMIN_TASK_LIST_KEY);
+      queryClient.invalidateQueries(POPULAR_REPOSITORIES_LIST_KEY);
+    },
+    // If the mutation fails, use the context returned from onMutate to roll back
+    onError: (err: { response?: { data: ErrorResponse } }, _newData, context) => {
+      if (context) {
+        const { previousData } = context as {
+          previousData: ContentListResponse;
+        };
+        queryClient.setQueryData(contentListKeyArray, previousData);
+      }
+      errorNotifier('Error deleting items from content list', 'An error occurred', err);
     },
   });
 };
@@ -395,51 +443,129 @@ export const useRepositoryParams = () =>
   });
 
 export const useFetchGpgKey = () => {
-  const { notify } = useNotification();
+  const errorNotifier = useErrorNotification();
+  const [isLoading, setIsLoading] = useState(false);
 
   const fetchGpgKey = async (url: string): Promise<string> => {
+    setIsLoading(true);
     let gpg_key = url;
     try {
       const data = await getGpgKey(url);
       gpg_key = data.gpg_key;
-    } catch ({ response = {} }) {
-      const { data } = response as { data: { message: string | undefined } | string };
-      const description = typeof data === 'string' ? data : data?.message;
-      notify({
-        variant: AlertVariant.danger,
-        title: 'Error fetching GPG key from provided URL',
-        description,
-      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      errorNotifier('Error fetching GPG key from provided URL', 'An error occurred', err);
     }
+    setIsLoading(false);
     return gpg_key;
   };
 
-  return { fetchGpgKey };
+  return { fetchGpgKey, isLoading };
 };
 
-export const useGetPackagesQuery = (
+export const useGetSnapshotList = (
   uuid: string,
-  count: number,
   page: number,
   limit: number,
   searchQuery: string,
   sortBy: string,
-) =>
-  useQuery<PackagesResponse>(
-    [PACKAGES_KEY, uuid, page, limit, searchQuery, sortBy, count],
+) => {
+  const errorNotifier = useErrorNotification();
+  return useQuery<SnapshotListResponse>(
+    [LIST_SNAPSHOTS_KEY, uuid, page, limit, searchQuery, sortBy],
+    () => getSnapshotList(uuid, page, limit, searchQuery, sortBy),
+    {
+      keepPreviousData: true,
+      optimisticResults: true,
+      staleTime: 60000,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      onError: (err: any) => {
+        errorNotifier('Unable to find snapshots with the given UUID.', 'An error occurred', err);
+      },
+    },
+  );
+};
+
+export const useGetPackagesQuery = (
+  uuid: string,
+  page: number,
+  limit: number,
+  searchQuery: string,
+  sortBy: string,
+) => {
+  const errorNotifier = useErrorNotification();
+  return useQuery<PackagesResponse>(
+    [PACKAGES_KEY, uuid, page, limit, searchQuery, sortBy],
     () => getPackages(uuid, page, limit, searchQuery, sortBy),
     {
       keepPreviousData: true,
       optimisticResults: true,
       staleTime: 60000,
-      onError: (err) => {
-        const { notify } = useNotification();
-        const error = err as Error; // Forced Type
-        notify({
-          variant: AlertVariant.danger,
-          title: 'Error fetching rpm packages',
-          description: error?.message,
-        });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      onError: (err: any) => {
+        errorNotifier('Unable to find packages with the given UUID.', 'An error occurred', err);
       },
     },
   );
+};
+
+export const useIntrospectRepositoryMutate = (
+  queryClient: QueryClient,
+  page: number,
+  perPage: number,
+  filterData?: FilterData,
+  sortString?: string,
+) => {
+  // Below MUST match the "useContentList" key found above or updates will fail.
+  const contentListKeyArray = [
+    CONTENT_LIST_KEY,
+    page,
+    perPage,
+    sortString,
+    ...Object.values(filterData || {}),
+  ];
+  const errorNotifier = useErrorNotification();
+  const { notify } = useNotification();
+  return useMutation(introspectRepository, {
+    onMutate: async (item: IntrospectRepositoryRequestItem) => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries(contentListKeyArray);
+      // Snapshot the previous value
+      const previousData: Partial<ContentListResponse> =
+        queryClient.getQueryData(contentListKeyArray) || {};
+
+      const previousStatus = previousData.data?.find((data) => item.uuid == data.uuid)?.status;
+      const newData = cloneDeep(previousData);
+      if (previousStatus) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        newData.data.filter((data) => item.uuid == data.uuid).at(0).status = 'Pending';
+      }
+
+      // Optimistically update to the new value
+      queryClient.setQueryData(contentListKeyArray, () => ({
+        ...newData,
+      }));
+      // Return a context object with the snapshotted value
+      return { previousData, queryClient };
+    },
+    onSuccess: () => {
+      notify({
+        variant: AlertVariant.success,
+        title: 'Repository introspection in progress',
+      });
+      queryClient.invalidateQueries(ADMIN_TASK_LIST_KEY);
+    },
+    // If the mutation fails, use the context returned from onMutate to roll back
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onError: (err: any, _newData, context) => {
+      if (context) {
+        const { previousData } = context as {
+          previousData: ContentListResponse;
+        };
+        queryClient.setQueryData(contentListKeyArray, previousData);
+      }
+      errorNotifier('Error introspecting repository', 'An error occurred', err);
+    },
+  });
+};

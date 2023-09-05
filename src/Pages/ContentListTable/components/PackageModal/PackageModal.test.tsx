@@ -1,25 +1,8 @@
 import { render } from '@testing-library/react';
 import PackageModal from './PackageModal';
-import { ContentItem, PackageItem } from '../../../../services/Content/ContentApi';
+import { PackageItem } from '../../../../services/Content/ContentApi';
 import { ReactQueryTestWrapper } from '../../../../testingHelpers';
 import { useGetPackagesQuery } from '../../../../services/Content/ContentQueries';
-
-const rowData: ContentItem = {
-  // Used variables
-  uuid: 'boop-beep-boop-blop',
-  name: 'steve',
-  package_count: 0,
-  // Placeholders for TS
-  url: '',
-  distribution_versions: [],
-  distribution_arch: '',
-  account_id: '',
-  org_id: '',
-  status: '',
-  last_introspection_error: '',
-  gpg_key: '',
-  metadata_verification: false,
-};
 
 const packageItem: PackageItem = {
   // Used variables
@@ -34,8 +17,17 @@ const packageItem: PackageItem = {
   uuid: '',
 };
 
+jest.mock('../../../../Hooks/useRootPath', () => () => 'someUrl');
+
 jest.mock('../../../../services/Content/ContentQueries', () => ({
   useGetPackagesQuery: jest.fn(),
+}));
+
+jest.mock('react-router-dom', () => ({
+  useNavigate: jest.fn(),
+  useParams: () => ({
+    repoUUID: 'some-uuid',
+  }),
 }));
 
 it('Render 1 item', () => {
@@ -49,12 +41,11 @@ it('Render 1 item', () => {
 
   const { queryByText } = render(
     <ReactQueryTestWrapper>
-      <PackageModal rowData={{ ...rowData, package_count: 1 }} closeModal={() => undefined} />
+      <PackageModal />
     </ReactQueryTestWrapper>,
   );
 
   expect(queryByText('Packages')).toBeInTheDocument();
-  expect(queryByText(rowData.name)).toBeInTheDocument();
   expect(queryByText(packageItem.name)).toBeInTheDocument();
   expect(queryByText(packageItem.version)).toBeInTheDocument();
   expect(queryByText(packageItem.release)).toBeInTheDocument();
@@ -73,12 +64,11 @@ it('Render with no packages (after an unsuccessful search)', () => {
 
   const { queryByText } = render(
     <ReactQueryTestWrapper>
-      <PackageModal rowData={rowData} closeModal={() => undefined} />
+      <PackageModal />
     </ReactQueryTestWrapper>,
   );
 
   expect(queryByText('Packages')).toBeInTheDocument();
-  expect(queryByText(rowData.name)).toBeInTheDocument();
   expect(queryByText('No packages match the search criteria')).toBeInTheDocument();
   expect(queryByText('Clear search')).toBeInTheDocument();
 });

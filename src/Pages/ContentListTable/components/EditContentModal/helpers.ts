@@ -1,9 +1,4 @@
 import { ContentItem, EditContentRequest } from '../../../../services/Content/ContentApi';
-export interface EditContentProps {
-  setClosed: () => void;
-  open: boolean;
-  values: ContentItem[];
-}
 
 export interface FormikEditValues {
   name: string;
@@ -15,20 +10,24 @@ export interface FormikEditValues {
   gpgLoading: boolean;
   expanded: boolean;
   uuid: string;
+  snapshot: boolean;
 }
 
 export const mapFormikToEditAPIValues = (formikValues: FormikEditValues[]): EditContentRequest =>
-  formikValues.map(({ name, url, arch, versions, gpgKey, metadataVerification, uuid }) => ({
-    uuid,
-    name,
-    url,
-    distribution_arch: arch,
-    distribution_versions: versions,
-    gpg_key: gpgKey,
-    metadata_verification: metadataVerification,
-  }));
+  formikValues.map(
+    ({ name, url, arch, versions, gpgKey, metadataVerification, uuid, snapshot }) => ({
+      uuid,
+      name,
+      url,
+      distribution_arch: arch,
+      distribution_versions: versions,
+      gpg_key: gpgKey,
+      metadata_verification: metadataVerification,
+      snapshot,
+    }),
+  );
 
-export const mapToDefaultFormikValues = (values: EditContentProps['values']): FormikEditValues[] =>
+export const mapToDefaultFormikValues = (values: ContentItem[]): FormikEditValues[] =>
   values.map(
     (
       {
@@ -39,6 +38,7 @@ export const mapToDefaultFormikValues = (values: EditContentProps['values']): Fo
         uuid,
         gpg_key: gpgKey,
         metadata_verification: metadataVerification,
+        snapshot,
       },
       index,
     ) => ({
@@ -51,5 +51,9 @@ export const mapToDefaultFormikValues = (values: EditContentProps['values']): Fo
       metadataVerification,
       expanded: index + 1 === values.length,
       uuid,
+      snapshot,
     }),
   );
+
+export const mapToContentItemsToEditContentRequest = (values: ContentItem[]): EditContentRequest =>
+  mapFormikToEditAPIValues(mapToDefaultFormikValues(values));

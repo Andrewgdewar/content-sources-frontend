@@ -26,7 +26,7 @@ const DropdownSelect = ({
   const onToggle = (isOpen) => setIsOpen(isOpen);
 
   const selectFrom = options.map((option, index) => (
-    <SelectOption key={option + index} value={option} />
+    <SelectOption key={option + index} id={option} value={option} />
   ));
 
   const onSelect = (_event, selection) => {

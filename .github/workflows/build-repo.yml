@@ -1,16 +1,39 @@
 name: Release workflow
 on:
-  workflow_run:
-    workflows: [build-test]
-    branches: [main, prod-beta]
-    types:
-      - completed
+  push:    
+    branches: [main, prod-beta, prod-stable]
+
 jobs:
-  pull-scripts:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+  build-test-release:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [16.14.0]
+    env:
+      COMMIT_AUTHOR_USERNAME: GitHub actions
+      COMMIT_AUTHOR_EMAIL: actions@github.com
+ 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
+  
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+  
+      - name: Install Dependencies
+        run: npm ci
+  
+      - name: Tests
+        run: npm test
+  
+      - name: Lint
+        run: npm run lint
+  
+      - name: Build
+        run: npm run build --if-present
+      
       - run: mkdir ${{ github.workspace }}/scripts
       - name: Pull release file
         run: curl -sSL https://raw.githubusercontent.com/RedHatInsights/insights-frontend-builder-common/master/src/release.sh > ${{ github.workspace }}/scripts/release.sh
@@ -21,26 +44,11 @@ jobs:
       - name: Pull quay push file
         run: curl -sSL https://raw.githubusercontent.com/RedHatInsights/insights-frontend-builder-common/master/src/quay_push.sh > ${{ github.workspace }}/scripts/quay_push.sh
       - run: chmod +x "${{ github.workspace }}/scripts/quay_push.sh"
-      - uses: actions/cache@v3
-        with:
-          path: ${{ github.workspace }}/scripts/*
-          key: ${{ github.sha }}-scripts
-  pull-jenkins:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
+      
       - run: mkdir ${{ github.workspace }}/.travis
       - name: Pull the file
         run: curl -sSL https://raw.githubusercontent.com/RedHatInsights/insights-frontend-builder-common/master/src/Jenkinsfile > ${{ github.workspace }}/.travis/58231b16fdee45a03a4ee3cf94a9f2c3
-      - uses: actions/cache@v3
-        with:
-          path: ${{ github.workspace }}/.travis/58231b16fdee45a03a4ee3cf94a9f2c3
-          key: ${{ github.sha }}-travis
-  set-ssh:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    runs-on: ubuntu-latest
-    steps:
+
       - name: Add SSH key
         run: |
             mkdir -p /home/runner/.ssh
@@ -51,44 +59,15 @@ jobs:
               HostName github.com
               User git
               AddKeysToAgent yes
-              IdentityFile /home/runner/.ssh/github_actions" >> /home/runner/.ssh/config
-      - uses: actions/cache@v3
-        with:
-          path: /home/runner/.ssh/*
-          key: ${{ github.sha }}-ssh
-  Release-to-build:
-    needs: [pull-scripts, pull-jenkins, set-ssh]
-    runs-on: ubuntu-latest
-    env:
-      COMMIT_AUTHOR_USERNAME: GitHub actions
-      COMMIT_AUTHOR_EMAIL: actions@github.com
-    steps:
-      - uses: actions/checkout@v3
+              IdentityFile /home/runner/.ssh/github_actions" >> /home/runner/.ssh/config      
       - name: Set env variables
         run: |
           echo "TRAVIS_BRANCH=$GITHUB_REF_NAME" >> $GITHUB_ENV
           echo "TRAVIS_BUILD_NUMBER=$GITHUB_RUN_ID" >> $GITHUB_ENV
-          echo ${{ github.event.head_commit.message }}
+          echo "${{ github.event.head_commit.message }}"
           echo "TRAVIS_COMMIT_MESSAGE=`git log -1 --pretty=format:"%s"`" >> $GITHUB_ENV
           echo "REPO=`node -e 'console.log(require("${{ github.workspace }}/package.json").insights.buildrepo)'`" >> $GITHUB_ENV
-      - run: git config -l | grep 'http\..*\.extraheader' | cut -d= -f1 | xargs -L1 git config --unset-all
-      - uses: actions/cache@v3
-        with:
-          path: /home/runner/.ssh/*
-          key: ${{ github.sha }}-ssh
-      - uses: actions/cache@v3
-        with:
-          path: ${{ github.workspace }}/scripts/*
-          key: ${{ github.sha }}-scripts
-      - uses: actions/cache@v3
-        with:
-          path: ${{ github.workspace }}/.travis/58231b16fdee45a03a4ee3cf94a9f2c3
-          key: ${{ github.sha }}-travis
-      - uses: actions/cache@v3
-        id: restore-build
-        with:
-          path: ${{ github.workspace }}/dist/*
-          key: ${{ github.sha }}
+      - run: git config -l | grep 'http\..*\.extraheader' | cut -d= -f1 | xargs -L1 git config --unset-all   
       - name: Check custom_release existence
         id: check_custom_release
         uses: andstor/file-existence-action@v1
@@ -99,16 +78,16 @@ jobs:
         if: steps.check_custom_release.outputs.files_exists != 'true'
         env:
           APP_BUILD_DIR: ${{ github.workspace }}/dist
-        run: ${{ github.workspace }}/scripts/release.sh ${{ github.event.workflow_run.head_branch == 'main' && 'stage-beta' || github.event.workflow_run.head_branch }}
+        run: ${{ github.workspace }}/scripts/release.sh ${{ github.ref_name == 'main' && 'stage-beta' || github.ref_name }}
         working-directory: ${{ github.workspace }}
       - name: cleanup previous deploy
         working-directory: ${{ github.workspace }}
         run: rm -rf dist/.git
       - name: Run stage-stable deploy
-        if: steps.check_custom_release.outputs.files_exists != 'true' && github.event.workflow_run.head_branch == 'main'
+        if: steps.check_custom_release.outputs.files_exists != 'true' && github.ref_name == 'main'
         env:
           APP_BUILD_DIR: ${{ github.workspace }}/dist
-        run: ${{ github.workspace }}/scripts/release.sh ${{ github.event.workflow_run.head_branch == 'main' && 'stage-stable' || github.event.workflow_run.head_branch }}
+        run: ${{ github.workspace }}/scripts/release.sh ${{ github.ref_name == 'main' && 'stage-stable' || github.event.workflow_run.head_branch }}
         working-directory: ${{ github.workspace }}
       - name: Run the deploy
         if: steps.check_custom_release.outputs.files_exists == 'true'

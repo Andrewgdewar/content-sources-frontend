@@ -1,5 +1,6 @@
 import {
   Button,
+  Switch,
   FileUpload,
   Form,
   FormGroup,
@@ -12,6 +13,7 @@ import {
   StackItem,
   TextInput,
   Tooltip,
+  Alert,
 } from '@patternfly/react-core';
 import {
   OutlinedQuestionCircleIcon,
@@ -32,9 +34,9 @@ import {
   FormikValues,
   maxUploadSize,
   failedFileUpload,
+  getDefaultFormikValues,
 } from './helpers';
-import useDebounce from '../../../../services/useDebounce';
-import { useNotification } from '../../../../services/Notifications/Notifications';
+import useNotification from '../../../../Hooks/useNotification';
 import ContentValidity from './components/ContentValidity';
 import {
   REPOSITORY_PARAMS_KEY,
@@ -46,12 +48,13 @@ import { RepositoryParamsResponse } from '../../../../services/Content/ContentAp
 import DropdownSelect from '../../../../components/DropdownSelect/DropdownSelect';
 import { useQueryClient } from 'react-query';
 import ConditionalTooltip from '../../../../components/ConditionalTooltip/ConditionalTooltip';
-import { useAppContext } from '../../../../middleware/AppContext';
 import { isEmpty, isEqual } from 'lodash';
-
-interface Props {
-  isDisabled?: boolean;
-}
+import useDeepCompareEffect from '../../../../Hooks/useDeepCompareEffect';
+import useDebounce from '../../../../Hooks/useDebounce';
+import { useNavigate } from 'react-router-dom';
+import { useContentListOutletContext } from '../../ContentListTable';
+import useRootPath from '../../../../Hooks/useRootPath';
+import { useAppContext } from '../../../../middleware/AppContext';
 
 const useStyles = createUseStyles({
   description: {
@@ -106,37 +109,37 @@ const useStyles = createUseStyles({
   singleContentCol: {
     padding: '8px 0px 0px !important',
   },
+  gpgKeyInput: {
+    '& .pf-c-form-control': {
+      backgroundPositionX: 'calc(100% - 1.3em)',
+    },
+  },
 });
-
-
-const defaultValues: FormikValues = {
-  name: '',
-  url: '',
-  gpgKey: '',
-  arch: 'any',
-  versions: ['any'],
-  gpgLoading: false,
-  expanded: true,
-  metadataVerification: false,
-};
 
 const defaultTouchedState = { name: false, url: false, gpgKey: false };
 
-const AddContent = ({ isDisabled: isButtonDisabled }: Props) => {
-  const { hidePackageVerification, rbac } = useAppContext();
-  const [isModalOpen, setIsModalOpen] = useState(false);
+const AddContent = () => {
+  const navigate = useNavigate();
+  const rootPath = useRootPath();
   const [changeVerified, setChangeVerified] = useState(false);
   const [gpgKeyList, setGpgKeyList] = useState<Array<string>>(['']);
+  const { features } = useAppContext();
+  const snapshottingEnabled = useMemo(
+    () => !!features?.snapshots?.enabled && !!features?.snapshots?.accessible,
+    [!!features?.snapshots?.enabled],
+  );
   const classes = useStyles();
   const queryClient = useQueryClient();
   const formik = useFormik({
-    initialValues: [defaultValues],
+    initialValues: [getDefaultFormikValues({ snapshot: snapshottingEnabled })],
     validateOnBlur: false,
     validateOnChange: false,
     validationSchema: makeValidationSchema(),
     initialTouched: [defaultTouchedState],
     onSubmit: () => undefined,
   });
+
+  const { clearCheckedRepositories } = useContentListOutletContext();
 
   const updateGpgKey = (index: number, value: string) => {
     setChangeVerified(false);
@@ -145,7 +148,7 @@ const AddContent = ({ isDisabled: isButtonDisabled }: Props) => {
     setGpgKeyList(updatedData);
   };
 
-  const { fetchGpgKey } = useFetchGpgKey();
+  const { fetchGpgKey, isLoading: isFetchingGpgKey } = useFetchGpgKey();
 
   const debouncedGpgKeyList = useDebounce(gpgKeyList, 300);
 
@@ -161,7 +164,7 @@ const AddContent = ({ isDisabled: isButtonDisabled }: Props) => {
             return {
               ...values,
               gpgKey: result,
-              ...(!hidePackageVerification && values.gpgKey === '' && !!updateValue
+              ...(values.gpgKey === '' && !!updateValue
                 ? {
                     metadataVerification:
                       !!validationList?.[index]?.url?.metadata_signature_present,
@@ -173,7 +176,7 @@ const AddContent = ({ isDisabled: isButtonDisabled }: Props) => {
         return {
           ...values,
           gpgKey: updateValue,
-          ...(!hidePackageVerification && values.gpgKey === '' && !!updateValue
+          ...(values.gpgKey === '' && !!updateValue
             ? {
                 metadataVerification: !!validationList?.[index]?.url?.metadata_signature_present,
               }
@@ -200,19 +203,19 @@ const AddContent = ({ isDisabled: isButtonDisabled }: Props) => {
     return { distributionArches, distributionVersions };
   }, [distArches, distVersions]);
 
-  const handleModalToggle = () => setIsModalOpen(!isModalOpen);
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    formik.setTouched([defaultTouchedState]);
-    formik.resetForm();
-    setGpgKeyList(['']);
-  };
+  const onClose = () => navigate(rootPath);
 
   const { mutateAsync: addContent, isLoading: isAdding } = useAddContentQuery(
     queryClient,
     mapFormikToAPIValues(formik.values),
   );
+
+  const onSave = () => {
+    addContent().then(() => {
+      onClose();
+      clearCheckedRepositories();
+    });
+  };
 
   const createDataLengthOf1 = formik.values.length === 1;
 
@@ -234,7 +237,7 @@ const AddContent = ({ isDisabled: isButtonDisabled }: Props) => {
     formik.setTouched([...formik.touched, defaultTouchedState]);
     formik.setValues([
       ...formik.values.map((vals) => ({ ...vals, expanded: false })),
-      defaultValues,
+      getDefaultFormikValues({ snapshot: snapshottingEnabled }),
     ]);
     setChangeVerified(false);
   };
@@ -264,6 +267,8 @@ const AddContent = ({ isDisabled: isButtonDisabled }: Props) => {
     switch (true) {
       case errors && touched:
         return 'error';
+      case field === 'gpgKey':
+        return 'default';
       case value && touched:
         return 'success';
       default:
@@ -285,40 +290,42 @@ const AddContent = ({ isDisabled: isButtonDisabled }: Props) => {
 
   let debouncedValues = useDebounce(formik.values) || []; // Initial value of []
 
-  const { mutateAsync: validateContentList, data: validationList } = useValidateContentList();
+  const {
+    mutateAsync: validateContentList,
+    data: validationList,
+    isLoading: isValidating,
+  } = useValidateContentList();
 
-  useEffect(() => {
+  useDeepCompareEffect(() => {
     // If validate is getting called to often, we could useDeepCompare
-    if (isModalOpen) {
-      if (debouncedValues.length !== formik.values.length) debouncedValues = formik.values;
-      const newTouchedValues = [...formik.touched];
-      validateContentList(
-        debouncedValues.map(({ name, url, gpgKey, metadataVerification }, index) => {
-          if (!newTouchedValues[index]?.name && name) {
-            newTouchedValues[index] = { ...newTouchedValues[index], name: true };
-          }
-          if (!newTouchedValues[index]?.url && url) {
-            newTouchedValues[index] = { ...newTouchedValues[index], url: true };
-          }
-          if (!newTouchedValues[index]?.gpgKey && gpgKey) {
-            newTouchedValues[index] = { ...newTouchedValues[index], gpgKey: true };
-          }
-          return {
-            name,
-            url,
-            gpg_key: gpgKey,
-            metadata_verification: metadataVerification,
-          };
-        }),
-      ).then(async (validationData) => {
-        const formikErrors = await formik.validateForm(debouncedValues);
-        const mappedErrorData = mapValidationData(validationData, formikErrors);
-        formik.setErrors(mappedErrorData);
-        setChangeVerified(true);
-        formik.setTouched(newTouchedValues);
-      });
-    }
-  }, [debouncedValues, debouncedValues.length, isModalOpen]);
+    if (debouncedValues.length !== formik.values.length) debouncedValues = formik.values;
+    const newTouchedValues = [...formik.touched];
+    validateContentList(
+      debouncedValues.map(({ name, url, gpgKey, metadataVerification }, index) => {
+        if (!newTouchedValues[index]?.name && name) {
+          newTouchedValues[index] = { ...newTouchedValues[index], name: true };
+        }
+        if (!newTouchedValues[index]?.url && url) {
+          newTouchedValues[index] = { ...newTouchedValues[index], url: true };
+        }
+        if (!newTouchedValues[index]?.gpgKey && gpgKey) {
+          newTouchedValues[index] = { ...newTouchedValues[index], gpgKey: true };
+        }
+        return {
+          name,
+          url,
+          gpg_key: gpgKey,
+          metadata_verification: metadataVerification,
+        };
+      }),
+    ).then(async (validationData) => {
+      const formikErrors = await formik.validateForm(debouncedValues);
+      const mappedErrorData = mapValidationData(validationData, formikErrors);
+      formik.setErrors(mappedErrorData);
+      setChangeVerified(true);
+      formik.setTouched(newTouchedValues);
+    });
+  }, [debouncedValues, debouncedValues.length]);
 
   const onToggle = (index: number) => {
     if (formik.values[index]?.expanded) {
@@ -370,335 +377,341 @@ const AddContent = ({ isDisabled: isButtonDisabled }: Props) => {
     });
   };
 
- const { notify } = useNotification();
+  const { notify } = useNotification();
+
+  const actionTakingPlace = isFetchingGpgKey || isAdding || isValidating || !changeVerified;
 
   return (
-    <>
-      <ConditionalTooltip
-        content='You do not have the required permissions to perform this action.'
-        show={!rbac?.write}
-        setDisabled
-      >
-        <Button
-          id='createContentSourceButton'
-          ouiaId='create_content_source'
-          variant='primary'
-          isDisabled={isButtonDisabled}
-          onClick={handleModalToggle}
+    <Modal
+      position='top'
+      variant={ModalVariant.medium}
+      title='Add custom repositories'
+      ouiaId='add_custom_repository'
+      ouiaSafe={!actionTakingPlace}
+      help={
+        <Popover
+          headerContent={<div>Add a custom repository</div>}
+          bodyContent={<div>Use this form to enter the values for a new repository.</div>}
         >
-          Add repositories
-        </Button>
-      </ConditionalTooltip>
-      {isModalOpen ? (
-        <Modal
-          position='top'
-          variant={ModalVariant.medium}
-          title='Add custom repositories'
-          ouiaId='add_custom_repository'
-          help={
-            <Popover
-              headerContent={<div>Add a custom repository</div>}
-              bodyContent={<div>Use this form to enter the values for a new repository.</div>}
+          <Button variant='plain' aria-label='Help'>
+            <OutlinedQuestionCircleIcon />
+          </Button>
+        </Popover>
+      }
+      description={
+        <p className={classes.description}>
+          Add by completing the form. Default values may be provided automatically.
+        </p>
+      }
+      isOpen
+      onClose={onClose}
+      footer={
+        <Stack>
+          <StackItem>
+            <Button
+              isDisabled={!formik.isValid || formik.values.length > 19}
+              className={classes.addRepositoryButton}
+              variant='link'
+              onClick={addRepository}
+              icon={<PlusCircleIcon />}
+              ouiaId='add_row'
             >
-              <Button variant='plain' aria-label='Help'>
-                <OutlinedQuestionCircleIcon />
-              </Button>
-            </Popover>
-          }
-          description={
-            <p className={classes.description}>
-              Add by completing the form. Default values may be provided automatically.
-            </p>
-          }
-          isOpen
-          onClose={closeModal}
-          footer={
-            <Stack>
-              <StackItem>
-                <Button
-                  isDisabled={!formik.isValid || formik.values.length > 19}
-                  className={classes.addRepositoryButton}
-                  variant='link'
-                  onClick={addRepository}
-                  icon={<PlusCircleIcon />}
-                  ouiaId='add_row'
-                >
-                  Add another repository
-                </Button>
-              </StackItem>
-              <StackItem>
-                <Button
-                  className={classes.saveButton}
-                  key='confirm'
-                  ouiaId='modal_save'
-                  variant='primary'
-                  isLoading={isAdding}
-                  isDisabled={
-                    !changeVerified ||
-                    !formik.isValid ||
-                    isAdding ||
-                    formik.values?.length !== debouncedValues?.length
-                  }
-                  onClick={() => addContent().then(closeModal)}
-                >
-                  Save
-                </Button>
-                <Button key='cancel' variant='link' onClick={closeModal} ouiaId='modal_cancel'>
-                  Cancel
-                </Button>
-              </StackItem>
-            </Stack>
-          }
-        >
-          <TableComposable aria-label='Table for repo add modal' ouiaId='add_modal_table'>
-            <Hide hide={createDataLengthOf1}>
-              <Tbody isExpanded={allExpanded}>
-                <Tr onClick={expandAllToggle} className={classes.toggleAllRow}>
+              Add another repository
+            </Button>
+          </StackItem>
+          <StackItem>
+            <Button
+              className={classes.saveButton}
+              key='confirm'
+              ouiaId='modal_save'
+              variant='primary'
+              isLoading={actionTakingPlace}
+              isDisabled={
+                !changeVerified ||
+                !formik.isValid ||
+                actionTakingPlace ||
+                formik.values?.length !== debouncedValues?.length
+              }
+              onClick={onSave}
+            >
+              Save
+            </Button>
+            <Button key='cancel' variant='link' onClick={onClose} ouiaId='modal_cancel'>
+              Cancel
+            </Button>
+          </StackItem>
+        </Stack>
+      }
+    >
+      <TableComposable aria-label='Table for repo add modal' ouiaId='add_modal_table'>
+        <Hide hide={createDataLengthOf1}>
+          <Tbody isExpanded={allExpanded}>
+            <Tr onClick={expandAllToggle} className={classes.toggleAllRow}>
+              <Td
+                className={classes.toggleAction}
+                isActionCell
+                expand={{
+                  rowIndex: 0,
+                  isExpanded: allExpanded,
+                }}
+              />
+              <Td dataLabel='expand-collapse'>{allExpanded ? 'Collapse all' : 'Expand all'}</Td>
+            </Tr>
+          </Tbody>
+        </Hide>
+        {formik.values.map(
+          (
+            {
+              expanded,
+              name,
+              url,
+              arch,
+              gpgKey,
+              versions,
+              gpgLoading,
+              metadataVerification,
+              snapshot,
+            },
+            index,
+          ) => (
+            <Tbody key={index} isExpanded={createDataLengthOf1 ? undefined : expanded}>
+              <Hide hide={createDataLengthOf1}>
+                <Tr className={classes.colHeader}>
                   <Td
+                    onClick={() => onToggle(index)}
                     className={classes.toggleAction}
                     isActionCell
                     expand={{
-                      rowIndex: 0,
-                      isExpanded: allExpanded,
+                      rowIndex: index,
+                      isExpanded: expanded,
                     }}
                   />
-                  <Td dataLabel='expand-collapse'>{allExpanded ? 'Collapse all' : 'Expand all'}</Td>
+                  <Td width={35} onClick={() => onToggle(index)} dataLabel={name}>
+                    {name || 'New content'}
+                  </Td>
+                  <Td onClick={() => onToggle(index)} dataLabel='validity'>
+                    <ContentValidity
+                      touched={formik.touched[index]}
+                      errors={formik.errors[index]}
+                    />
+                  </Td>
+                  <Td dataLabel='removeButton' className={classes.removeButton}>
+                    <Hide hide={formik.values.length === 1}>
+                      <Button
+                        onClick={() => removeRepository(index)}
+                        variant='link'
+                        icon={<MinusCircleIcon />}
+                      >
+                        Remove
+                      </Button>
+                    </Hide>
+                  </Td>
                 </Tr>
-              </Tbody>
-            </Hide>
-            {formik.values.map(
-              (
-                { expanded, name, url, arch, gpgKey, versions, gpgLoading, metadataVerification },
-                index,
-              ) => (
-                <Tbody key={index} isExpanded={createDataLengthOf1 ? undefined : expanded}>
-                  <Hide hide={createDataLengthOf1}>
-                    <Tr className={classes.colHeader}>
-                      <Td
-                        onClick={() => onToggle(index)}
-                        className={classes.toggleAction}
-                        isActionCell
-                        expand={{
-                          rowIndex: index,
-                          isExpanded: expanded,
-                        }}
-                      />
-                      <Td width={35} onClick={() => onToggle(index)} dataLabel={name}>
-                        {name || 'New content'}
-                      </Td>
-                      <Td onClick={() => onToggle(index)} dataLabel='validity'>
-                        <ContentValidity
-                          touched={formik.touched[index]}
-                          errors={formik.errors[index]}
+              </Hide>
+              <Tr isExpanded={createDataLengthOf1 ? undefined : expanded}>
+                <Td
+                  colSpan={4}
+                  className={
+                    createDataLengthOf1 ? classes.singleContentCol : classes.mainContentCol
+                  }
+                >
+                  <Form>
+                    <Hide hide={!snapshottingEnabled}>
+                      <FormGroup fieldId='snapshot'>
+                        <Switch
+                          id={'snapshot-switch-' + index}
+                          hasCheckIcon
+                          label='Snapshot creation enabled'
+                          labelOff='Snapshot creation disabled'
+                          isChecked={snapshot}
+                          onChange={() => {
+                            updateVariable(index, { snapshot: !snapshot });
+                          }}
                         />
-                      </Td>
-                      <Td dataLabel='removeButton' className={classes.removeButton}>
-                        <Hide hide={formik.values.length === 1}>
-                          <Button
-                            onClick={() => removeRepository(index)}
-                            variant='link'
-                            icon={<MinusCircleIcon />}
-                          >
-                            Remove
-                          </Button>
-                        </Hide>
-                      </Td>
-                    </Tr>
-                  </Hide>
-                  <Tr isExpanded={createDataLengthOf1 ? undefined : expanded}>
-                    <Td
-                      colSpan={4}
-                      className={
-                        createDataLengthOf1 ? classes.singleContentCol : classes.mainContentCol
-                      }
-                    >
-                      <Form>
-                        <FormGroup
-                          label='Name'
-                          isRequired
-                          fieldId='namegroup'
-                          validated={getFieldValidation(index, 'name')}
-                          helperTextInvalid={formik.errors[index]?.name}
-                        >
-                          <TextInput
-                            isRequired
-                            id='name'
-                            name='name'
-                            label='Name'
-                            ouiaId='input_name'
-                            type='text'
-                            validated={getFieldValidation(index, 'name')}
-                            onChange={(value) => {
-                              updateVariable(index, { name: value });
-                            }}
-                            value={name || ''}
-                            placeholder='Enter name'
+                        <Tooltip content='Automatically create daily snapshots of this repository.'>
+                          <OutlinedQuestionCircleIcon
+                            className='pf-u-ml-xs'
+                            color={global_Color_200.value}
                           />
-                        </FormGroup>
-                        <FormGroup
-                          label='URL'
-                          isRequired
-                          fieldId='url'
-                          validated={getFieldValidation(index, 'url')}
-                          helperTextInvalid={formik.errors[index]?.url}
-                        >
-                          <TextInput
-                            isRequired
-                            type='url'
-                            validated={getFieldValidation(index, 'url')}
-                            onBlur={() => updateArchAndVersion(index)}
-                            onChange={(value) => {
-                              if (url !== value) {
-                                updateVariable(index, { url: value });
-                              }
-                            }}
-                            value={url || ''}
-                            placeholder='https://'
-                            id='url'
-                            name='url'
-                            label='Url'
-                            ouiaId='input_url'
-                          />
-                        </FormGroup>
-                        <FormGroup
-                          label='Restrict architecture'
-                          aria-label='restrict_to_architecture'
-                          labelIcon={
-                            <Tooltip content='Optional: Select value to restrict package architecture'>
-                              <OutlinedQuestionCircleIcon
-                                className='pf-u-ml-xs'
-                                color={global_Color_200.value}
-                              />
-                            </Tooltip>
-                          }
-                          fieldId='arch'
-                        >
-                          <DropdownSelect
-                            ouiaId='restrict_to_architecture'
-                            menuAppendTo={document.body}
-                            toggleId={'archSelection' + index}
-                            options={Object.keys(distributionArches)}
-                            variant={SelectVariant.single}
-                            selectedProp={Object.keys(distributionArches).find(
-                              (key: string) => arch === distributionArches[key],
-                            )}
-                            setSelected={(value) =>
-                              updateVariable(index, { arch: distributionArches[value] })
-                            }
-                          />
-                        </FormGroup>
-                        <FormGroup
-                          label='Restrict OS version'
-                          aria-label='restrict_to_os_version'
-                          labelIcon={
-                            <Tooltip content='Optional: Select value to restrict package OS version'>
-                              <OutlinedQuestionCircleIcon
-                                className='pf-u-ml-xs'
-                                color={global_Color_200.value}
-                              />
-                            </Tooltip>
-                          }
-                          fieldId='version'
-                        >
-                          <DropdownSelect
-                            ouiaId='restrict_to_os_version'
-                            menuAppendTo={document.body}
-                            toggleId={'versionSelection' + index}
-                            options={Object.keys(distributionVersions)}
-                            variant={SelectVariant.typeaheadMulti}
-                            selectedProp={Object.keys(distributionVersions).filter((key: string) =>
-                              versions?.includes(distributionVersions[key]),
-                            )}
-                            placeholderText={versions?.length ? '' : 'Any version'}
-                            setSelected={(value) => setVersionSelected(value, index)}
-                          />
-                        </FormGroup>
-                        <FormGroup
-                          label='GPG key'
-                          labelIcon={
-                            <Tooltip content='Optional: Add GPG Key file or URL'>
-                              <OutlinedQuestionCircleIcon
-                                className='pf-u-ml-xs'
-                                color={global_Color_200.value}
-                              />
-                            </Tooltip>
-                          }
-                          fieldId='gpgKey'
-                          validated={getFieldValidation(index, 'gpgKey')}
-                          helperTextInvalid={formik.errors[index]?.gpgKey}
-                        >
-                          <FileUpload
-                            validated={getFieldValidation(index, 'gpgKey')}
-                            id='gpgKey-uploader'
-                            aria-label='gpgkey_file_to_upload'
-                            type='text'
-                            filenamePlaceholder='Drag a file here or upload one'
-                            textAreaPlaceholder='Paste GPG key or URL here'
-                            value={gpgKeyList[index]}
-                            isLoading={gpgLoading}
-                            spellCheck={false}
-                            onDataChange={(value) => updateGpgKey(index, value)}
-                            onTextChange={(value) => updateGpgKey(index, value)}
-                            onClearClick={() => updateGpgKey(index, '')}
-                            dropzoneProps={{
-                              maxSize: maxUploadSize,
-                              onDropRejected: (files) => failedFileUpload(files, notify),
-                            }}
-                            allowEditingUploadedText
-                            browseButtonText='Upload'
-                          />
-                        </FormGroup>
-                        <Hide hide={hidePackageVerification || !gpgKey}>
-                          <FormGroup
-                            fieldId='metadataVerification'
-                            label='Use GPG key for'
+                        </Tooltip>
+                        <Hide hide={snapshot}>
+                          <Alert
+                            variant='warning'
+                            style={{ paddingTop: '10px' }}
+                            title='Disabling snapshots may result in a higher risk of losing content or unintentionally modifying it irreversibly.'
                             isInline
-                          >
-                            <Radio
-                              isDisabled={
-                                validationList?.[index]?.url?.metadata_signature_present !== true
-                              }
-                              id='package-verification-only'
-                              name='package-verification-only'
-                              label='Package verification only'
-                              isChecked={!metadataVerification}
-                              onChange={() =>
-                                updateVariable(index, { metadataVerification: false })
-                              }
-                            />
-                            <ConditionalTooltip
-                              show={
-                                validationList?.[index]?.url?.metadata_signature_present !== true
-                              }
-                              content="This repository's metadata is not signed, metadata verification is not possible."
-                            >
-                              <Radio
-                                isDisabled={
-                                  validationList?.[index]?.url?.metadata_signature_present !== true
-                                }
-                                id='package-and-repository-verification'
-                                name='package-and-repository-verification'
-                                label='Package and metadata verification'
-                                isChecked={metadataVerification}
-                                onChange={() =>
-                                  updateVariable(index, { metadataVerification: true })
-                                }
-                              />
-                            </ConditionalTooltip>
-                          </FormGroup>
+                            isPlain
+                          />
                         </Hide>
-                      </Form>
-                    </Td>
-                  </Tr>
-                </Tbody>
-              ),
-            )}
-          </TableComposable>
-        </Modal>
-      ) : (
-        ''
-      )}
-    </>
+                      </FormGroup>
+                    </Hide>
+                    <FormGroup
+                      label='Name'
+                      isRequired
+                      fieldId='namegroup'
+                      validated={getFieldValidation(index, 'name')}
+                      helperTextInvalid={formik.errors[index]?.name}
+                    >
+                      <TextInput
+                        isRequired
+                        id='name'
+                        name='name'
+                        label='Name'
+                        ouiaId='input_name'
+                        type='text'
+                        validated={getFieldValidation(index, 'name')}
+                        onChange={(value) => {
+                          updateVariable(index, { name: value });
+                        }}
+                        value={name || ''}
+                        placeholder='Enter name'
+                      />
+                    </FormGroup>
+                    <FormGroup
+                      label='URL'
+                      isRequired
+                      fieldId='url'
+                      validated={getFieldValidation(index, 'url')}
+                      helperTextInvalid={formik.errors[index]?.url}
+                    >
+                      <TextInput
+                        isRequired
+                        type='url'
+                        validated={getFieldValidation(index, 'url')}
+                        onBlur={() => updateArchAndVersion(index)}
+                        onChange={(value) => {
+                          if (url !== value) {
+                            updateVariable(index, { url: value });
+                          }
+                        }}
+                        value={url || ''}
+                        placeholder='https://'
+                        id='url'
+                        name='url'
+                        label='Url'
+                        ouiaId='input_url'
+                      />
+                    </FormGroup>
+                    <FormGroup
+                      label='Restrict architecture'
+                      aria-label='restrict_to_architecture'
+                      labelIcon={
+                        <Tooltip content='Optional: Select value to restrict package architecture'>
+                          <OutlinedQuestionCircleIcon
+                            className='pf-u-ml-xs'
+                            color={global_Color_200.value}
+                          />
+                        </Tooltip>
+                      }
+                      fieldId='arch'
+                    >
+                      <DropdownSelect
+                        ouiaId='restrict_to_architecture'
+                        menuAppendTo={document.body}
+                        toggleId={'archSelection' + index}
+                        options={Object.keys(distributionArches)}
+                        variant={SelectVariant.single}
+                        selectedProp={Object.keys(distributionArches).find(
+                          (key: string) => arch === distributionArches[key],
+                        )}
+                        setSelected={(value) =>
+                          updateVariable(index, { arch: distributionArches[value] })
+                        }
+                      />
+                    </FormGroup>
+                    <FormGroup
+                      label='Restrict OS version'
+                      aria-label='restrict_to_os_version'
+                      labelIcon={
+                        <Tooltip content='Optional: Select value to restrict package OS version'>
+                          <OutlinedQuestionCircleIcon
+                            className='pf-u-ml-xs'
+                            color={global_Color_200.value}
+                          />
+                        </Tooltip>
+                      }
+                      fieldId='version'
+                    >
+                      <DropdownSelect
+                        ouiaId='restrict_to_os_version'
+                        menuAppendTo={document.body}
+                        toggleId={'versionSelection' + index}
+                        options={Object.keys(distributionVersions)}
+                        variant={SelectVariant.typeaheadMulti}
+                        selectedProp={Object.keys(distributionVersions).filter((key: string) =>
+                          versions?.includes(distributionVersions[key]),
+                        )}
+                        placeholderText={versions?.length ? '' : 'Any version'}
+                        setSelected={(value) => setVersionSelected(value, index)}
+                      />
+                    </FormGroup>
+                    <FormGroup
+                      label='GPG key'
+                      labelIcon={
+                        <Tooltip content='Optional: Add GPG Key file or URL'>
+                          <OutlinedQuestionCircleIcon
+                            className='pf-u-ml-xs'
+                            color={global_Color_200.value}
+                          />
+                        </Tooltip>
+                      }
+                      fieldId='gpgKey'
+                      validated={getFieldValidation(index, 'gpgKey')}
+                      helperTextInvalid={formik.errors[index]?.gpgKey}
+                    >
+                      <FileUpload
+                        className={classes.gpgKeyInput}
+                        validated={getFieldValidation(index, 'gpgKey')}
+                        id='gpgKey-uploader'
+                        aria-label='gpgkey_file_to_upload'
+                        type='text'
+                        filenamePlaceholder='Drag a file here or upload one'
+                        textAreaPlaceholder='Paste GPG key or URL here'
+                        value={gpgKeyList[index]}
+                        isLoading={gpgLoading}
+                        spellCheck={false}
+                        onDataChange={(value) => updateGpgKey(index, value)}
+                        onTextChange={(value) => updateGpgKey(index, value)}
+                        onClearClick={() => updateGpgKey(index, '')}
+                        dropzoneProps={{
+                          maxSize: maxUploadSize,
+                          onDropRejected: (files) => failedFileUpload(files, notify),
+                        }}
+                        allowEditingUploadedText
+                        browseButtonText='Upload'
+                      />
+                    </FormGroup>
+                    <Hide hide={!gpgKey}>
+                      <FormGroup fieldId='metadataVerification' label='Use GPG key for' isInline>
+                        <Radio
+                          id='package-verification-only'
+                          name='package-verification-only'
+                          label='Package verification only'
+                          isChecked={!metadataVerification}
+                          onChange={() => updateVariable(index, { metadataVerification: false })}
+                        />
+                        <ConditionalTooltip
+                          show={validationList?.[index]?.url?.metadata_signature_present === false}
+                          content="This repository's metadata is not signed, metadata verification is not possible."
+                        >
+                          <Radio
+                            id='package-and-repository-verification'
+                            name='package-and-repository-verification'
+                            label='Package and metadata verification'
+                            isChecked={metadataVerification}
+                            onChange={() => updateVariable(index, { metadataVerification: true })}
+                          />
+                        </ConditionalTooltip>
+                      </FormGroup>
+                    </Hide>
+                  </Form>
+                </Td>
+              </Tr>
+            </Tbody>
+          ),
+        )}
+      </TableComposable>
+    </Modal>
   );
 };
 

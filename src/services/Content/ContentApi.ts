@@ -11,11 +11,16 @@ export interface ContentItem {
   org_id: string;
   status: string;
   last_introspection_error: string;
+  last_introspection_time: string;
+  failed_introspections_count: number;
   gpg_key: string;
   metadata_verification: boolean;
+  snapshot: boolean;
+  last_snapshot_uuid?: string;
+  last_snapshot?: SnapshotItem;
 }
 
-export interface PopularRepositories {
+export interface PopularRepository {
   uuid: string;
   existing_name: string;
   suggested_name: string;
@@ -33,6 +38,7 @@ export interface CreateContentRequestItem {
   distribution_arch?: string;
   gpg_key?: string;
   metadata_verification?: boolean;
+  snapshot?: boolean;
 }
 
 export interface ErrorItem {
@@ -57,6 +63,7 @@ export interface EditContentRequestItem {
   distribution_versions: string[];
   gpg_key: string;
   metadata_verification: boolean;
+  snapshot: boolean;
 }
 
 export type EditContentRequest = Array<EditContentRequestItem>;
@@ -66,8 +73,8 @@ export type ContentList = Array<ContentItem>;
 export type Links = {
   first: string;
   last: string;
-  next: string;
-  prev: string;
+  next?: string;
+  prev?: string;
 };
 
 export type Meta = {
@@ -83,7 +90,7 @@ export interface ContentListResponse {
 }
 
 export interface PopularRepositoriesResponse {
-  data: PopularRepositories[];
+  data: PopularRepository[];
   links: Links;
   meta: Meta;
 }
@@ -146,6 +153,33 @@ export type PackagesResponse = {
   meta: Meta;
 };
 
+export type ContentCounts = {
+  'rpm.advisory'?: number;
+  'rpm.package'?: number;
+  'rpm.packagecategory'?: number;
+  'rpm.packageenvironment'?: number;
+  'rpm.packagegroup'?: number;
+};
+
+export interface SnapshotItem {
+  created_at: string;
+  distribution_path: string;
+  content_counts: ContentCounts;
+  added_counts: ContentCounts;
+  removed_counts: ContentCounts;
+}
+
+export type SnapshotListResponse = {
+  data: SnapshotItem[];
+  links: Links;
+  meta: Meta;
+};
+
+export type IntrospectRepositoryRequestItem = {
+  uuid: string;
+  reset_count?: boolean;
+};
+
 export const getPopularRepositories: (
   page: number,
   limit: number,
@@ -181,8 +215,20 @@ export const getContentList: (
   return data;
 };
 
+export const fetchContentItem: (uuid: string) => Promise<ContentItem> = async (uuid: string) => {
+  const { data } = await axios.get(`/api/content-sources/v1/repositories/${uuid}`);
+  return data;
+};
+
 export const deleteContentListItem: (uuid: string) => Promise<void> = async (uuid: string) => {
   const { data } = await axios.delete(`/api/content-sources/v1/repositories/${uuid}`);
+  return data;
+};
+
+export const deleteContentListItems: (uuids: string[]) => Promise<void> = async (
+  uuids: string[],
+) => {
+  const { data } = await axios.post('/api/content-sources/v1/repositories/bulk_delete/', { uuids });
   return data;
 };
 
@@ -243,6 +289,37 @@ export const getPackages: (
     `/api/content-sources/v1.0/repositories/${uuid}/rpms?offset=${
       (page - 1) * limit
     }&limit=${limit}&search=${searchQuery}&sort_by=${sortBy}`,
+  );
+  return data;
+};
+
+export const getSnapshotList: (
+  uuid: string,
+  page: number,
+  limit: number,
+  searchQuery: string,
+  sortBy: string,
+) => Promise<SnapshotListResponse> = async (
+  uuid: string,
+  page: number,
+  limit: number,
+  searchQuery: string,
+  sortBy: string,
+) => {
+  const { data } = await axios.get(
+    `/api/content-sources/v1.0/repositories/${uuid}/snapshots/?offset=${
+      (page - 1) * limit
+    }&limit=${limit}&search=${searchQuery}&sort_by=${sortBy}`,
+  );
+  return data;
+};
+
+export const introspectRepository: (
+  request: IntrospectRepositoryRequestItem,
+) => Promise<void> = async (request) => {
+  const { data } = await axios.post(
+    `/api/content-sources/v1/repositories/${request.uuid}/introspect/`,
+    { reset_count: request.reset_count },
   );
   return data;
 };

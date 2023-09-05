@@ -26,16 +26,24 @@ import {
   useDeletePopularRepositoryMutate,
   useRepositoryParams,
   useAddPopularRepositoryQuery,
+  useBulkDeleteContentItemMutate,
 } from '../../services/Content/ContentQueries';
-import { CreateContentRequest, FilterData } from '../../services/Content/ContentApi';
+import {
+  CreateContentRequest,
+  CreateContentRequestItem,
+  FilterData,
+  PopularRepository,
+} from '../../services/Content/ContentApi';
 import Hide from '../../components/Hide/Hide';
 import { useQueryClient } from 'react-query';
 import { useAppContext } from '../../middleware/AppContext';
 import ConditionalTooltip from '../../components/ConditionalTooltip/ConditionalTooltip';
 import UrlWithExternalIcon from '../../components/UrlWithLinkIcon/UrlWithLinkIcon';
 import { SearchIcon } from '@patternfly/react-icons';
-import useDebounce from '../../services/useDebounce';
-import EmptyTableState from './components/EmptyTableState';
+import useDebounce from '../../Hooks/useDebounce';
+import EmptyTableState from '../../components/EmptyTableState/EmptyTableState';
+import DeleteKebab from '../../components/DeleteKebab/DeleteKebab';
+import { repoToRequestItem } from './helper';
 
 const useStyles = createUseStyles({
   mainContainer: {
@@ -75,17 +83,30 @@ const useStyles = createUseStyles({
   disabled: {
     color: global_disabled_color_100.value,
   },
+  repositoryActions: {
+    display: 'flex',
+    flexDirection: 'row',
+  },
 });
+
+const perPageKey = 'popularRepositoriesperPage';
 
 const PopularRepositoriesTable = () => {
   const classes = useStyles();
   const queryClient = useQueryClient();
   const { rbac } = useAppContext();
-  const [checkedRepositories, setCheckedRepositories] = useState<boolean[]>([]);
+  // Uses urls as map key because uuids don't exist on repositories that haven't been created
+  const [checkedRepositoriesToAdd, setCheckedRepositoriesToAdd] = useState<
+    Map<string, CreateContentRequestItem>
+  >(new Map());
+  // Set of uuids which are required for bulk delete
+  const [checkedRepositoriesToDelete, setCheckedRepositoriesToDelete] = useState<Set<string>>(
+    new Set(),
+  );
   const [selectedData, setSelectedData] = useState<CreateContentRequest>([]);
   const [selectedUUID, setSelectedUUID] = useState<string>('');
 
-  const storedPerPage = Number(localStorage.getItem('perPage')) || 20;
+  const storedPerPage = Number(localStorage.getItem(perPageKey)) || 20;
   const [page, setPage] = useState(1);
   const [searchValue, setSearchValue] = useState('');
   const debouncedSearchValue = useDebounce(searchValue);
@@ -97,20 +118,9 @@ const PopularRepositoriesTable = () => {
     isError,
     isFetching,
     data = { data: [], meta: { count: 0, limit: 20, offset: 0 } },
-  } = usePopularRepositoriesQuery(page, perPage, { searchQuery: debouncedSearchValue });
-
-  const areAllReposAdded = useMemo(() => data.data.every(({ uuid }) => !!uuid), [data]);
-
-  const atLeastOneRepoChecked = useMemo(
-    () => checkedRepositories.some((val) => val),
-    [checkedRepositories],
-  );
-
-  const areAllReposSelected = useMemo(
-    () =>
-      !areAllReposAdded && data.data.every(({ uuid }, key) => !!uuid || checkedRepositories[key]),
-    [data, checkedRepositories, areAllReposAdded],
-  );
+  } = usePopularRepositoriesQuery(page, perPage, {
+    searchQuery: !searchValue ? searchValue : debouncedSearchValue,
+  });
 
   const {
     isLoading: repositoryParamsLoading,
@@ -130,24 +140,90 @@ const PopularRepositoriesTable = () => {
     { searchQuery: debouncedSearchValue } as FilterData,
   );
 
+  const clearCheckedRepositories = () => {
+    setCheckedRepositoriesToAdd(new Map());
+    setCheckedRepositoriesToDelete(new Set());
+  };
+
+  const selectAllRepos = (_, checked: boolean) => {
+    const newSet = new Set(checkedRepositoriesToDelete);
+    const newMap = new Map(checkedRepositoriesToAdd);
+    if (checked) {
+      popularData.forEach((repo) => {
+        if (repo.uuid) {
+          newSet.add(repo.uuid);
+        } else {
+          newMap.set(repo.url, repoToRequestItem(repo));
+        }
+      });
+    } else {
+      popularData.forEach((repo) => {
+        if (repo.uuid) {
+          newSet.delete(repo.uuid);
+        } else {
+          newMap.delete(repo.url);
+        }
+      });
+    }
+    setCheckedRepositoriesToDelete(newSet);
+    setCheckedRepositoriesToAdd(newMap);
+  };
+
+  const atLeastOneRepoToDeleteChecked = useMemo(
+    () => checkedRepositoriesToDelete.size >= 1,
+    [checkedRepositoriesToDelete],
+  );
+  const atLeastOneRepoToAddChecked = useMemo(
+    () => checkedRepositoriesToAdd.size >= 1,
+    [checkedRepositoriesToAdd],
+  );
+
+  const areAllReposSelected = useMemo(
+    () =>
+      data.data.every((repo) => {
+        if (repo.uuid) {
+          return checkedRepositoriesToDelete.has(repo.uuid);
+        } else {
+          return checkedRepositoriesToAdd.has(repo.url);
+        }
+      }),
+    [data, checkedRepositoriesToAdd, checkedRepositoriesToDelete],
+  );
+
+  const onSelectRepo = (repo: PopularRepository, value: boolean) => {
+    if (repo.uuid) {
+      const newSet = new Set(checkedRepositoriesToDelete);
+      if (value) {
+        newSet.add(repo.uuid);
+      } else {
+        newSet.delete(repo.uuid);
+      }
+      setCheckedRepositoriesToDelete(newSet);
+    } else {
+      const newMap = new Map(checkedRepositoriesToAdd);
+      if (value) {
+        newMap.set(repo.url, repoToRequestItem(repo));
+      } else {
+        newMap.delete(repo.url);
+      }
+      setCheckedRepositoriesToAdd(newMap);
+    }
+  };
+
   useEffect(() => {
     if (!isFetching) {
       setSelectedData([]);
       setSelectedUUID('');
-      setCheckedRepositories(data.data.map(() => false));
     }
   }, [isFetching]);
 
   useEffect(() => {
-    if (data?.data?.length > 0 && checkedRepositories.length === 0) {
-      setCheckedRepositories(data.data.map(() => false));
-    }
-  }, [data?.data?.length]);
-
-  useEffect(() => {
     if (selectedData.length != 0) {
       addContentQuery().then(
-        () => setSelectedData([]),
+        () => {
+          setSelectedData([]);
+          clearCheckedRepositories();
+        },
         () => setSelectedData([]),
       );
     }
@@ -155,18 +231,9 @@ const PopularRepositoriesTable = () => {
 
   useEffect(() => {
     if (selectedUUID) {
-      deleteItem(selectedUUID).then(undefined, () => setSelectedUUID(''));
+      deleteItem(selectedUUID).then(clearCheckedRepositories, () => setSelectedUUID(''));
     }
   }, [selectedUUID]);
-
-  const onSelectRepo = (index: number, value: boolean) => {
-    const newValue = checkedRepositories;
-    newValue[index] = value;
-    setCheckedRepositories([...newValue]);
-  };
-
-  const selectAllRepos = (_, checked: boolean) =>
-    setCheckedRepositories(data.data.map(() => checked));
 
   const archesDisplay = (arch: string) => distArches.find(({ label }) => arch === label)?.name;
 
@@ -183,42 +250,44 @@ const PopularRepositoriesTable = () => {
     { searchQuery: debouncedSearchValue } as FilterData,
   );
 
+  const { mutateAsync: deleteItems, isLoading: isDeletingItems } = useBulkDeleteContentItemMutate(
+    queryClient,
+    checkedRepositoriesToDelete,
+    page,
+    perPage,
+    { searchQuery: debouncedSearchValue } as FilterData,
+    undefined, // sort string
+  );
+
   // Other update actions will be added to this later.
-  const actionTakingPlace = isDeleting || isFetching || repositoryParamsLoading || isAdding;
+  const actionTakingPlace =
+    isDeleting || isFetching || repositoryParamsLoading || isAdding || isDeletingItems;
 
   const onSetPage: OnSetPage = (_, newPage) => setPage(newPage);
 
   const onPerPageSelect: OnPerPageSelect = (_, newPerPage, newPage) => {
     // Save this value through page refresh for use on next reload
-    localStorage.setItem('perPage', newPerPage.toString());
+    localStorage.setItem(perPageKey, newPerPage.toString());
     setPerPage(newPerPage);
     setPage(newPage);
   };
 
   const addSelected = () => {
     const request: CreateContentRequest = [];
-    checkedRepositories.forEach((checked, index) => {
-      if (checked && data?.data[index] && !data.data[index].uuid) {
-        const {
-          suggested_name,
-          url,
-          distribution_versions,
-          distribution_arch,
-          gpg_key,
-          metadata_verification,
-        } = data.data[index];
-
-        request.push({
-          name: suggested_name,
-          url,
-          distribution_versions,
-          distribution_arch,
-          gpg_key,
-          metadata_verification,
-        });
-      }
+    checkedRepositoriesToAdd.forEach((repo) => {
+      request.push(repo);
     });
     setSelectedData(request);
+  };
+
+  const deleteSelected = async () => {
+    deleteItems(checkedRepositoriesToDelete).then(() => {
+      const newMaxPage = Math.ceil((count - checkedRepositoriesToDelete.size) / perPage);
+      if (page > 1 && newMaxPage < page) {
+        setPage(newMaxPage);
+      }
+      clearCheckedRepositories();
+    });
   };
 
   const columnHeaders = ['Name', 'Architecture', 'Versions'];
@@ -232,8 +301,14 @@ const PopularRepositoriesTable = () => {
     meta: { count = 0 },
   } = data;
 
+  const countIsZero = !data?.data?.length;
+
   return (
-    <Grid className={classes.mainContainer}>
+    <Grid
+      data-ouia-safe={!actionTakingPlace}
+      data-ouia-component-id='popular_repositories_page'
+      className={classes.mainContainer}
+    >
       <Flex className={classes.topContainer}>
         <FlexItem>
           <InputGroup>
@@ -249,26 +324,43 @@ const PopularRepositoriesTable = () => {
               />
               <SearchIcon size='sm' className={classes.searchIcon} />
             </FlexItem>
-            <FlexItem>
+            <FlexItem className={classes.repositoryActions}>
+              {/* RBAC popover takes precedence */}
               <ConditionalTooltip
-                content='You do not have the required permissions to perform this action.'
-                show={!rbac?.write}
+                content={
+                  !rbac?.write
+                    ? 'You do not have the required permissions to perform this action.'
+                    : 'Make a selection below to add multiple repositories'
+                }
+                show={!rbac?.write || !atLeastOneRepoToAddChecked}
                 setDisabled
               >
                 <Button
                   onClick={addSelected}
                   className={classes.addRepositoriesButton}
-                  isDisabled={!atLeastOneRepoChecked}
                   ouiaId='add_checked_repos'
                 >
-                  Add repositories
+                  {atLeastOneRepoToAddChecked
+                    ? `Add ${checkedRepositoriesToAdd.size} repositories`
+                    : 'Add selected repositories'}
                 </Button>
+              </ConditionalTooltip>
+              <ConditionalTooltip
+                content='You do not have the required permissions to perform this action.'
+                show={!rbac?.write}
+                setDisabled
+              >
+                <DeleteKebab
+                  atLeastOneRepoChecked={atLeastOneRepoToDeleteChecked}
+                  numberOfReposChecked={checkedRepositoriesToDelete.size}
+                  deleteCheckedRepos={deleteSelected}
+                />
               </ConditionalTooltip>
             </FlexItem>
           </InputGroup>
         </FlexItem>
         <FlexItem>
-          <Hide hide={isLoading}>
+          <Hide hide={isLoading || countIsZero}>
             <Pagination
               id='top-pagination-id'
               widgetId='topPaginationWidgetId'
@@ -293,7 +385,7 @@ const PopularRepositoriesTable = () => {
           />
         </Grid>
       </Hide>
-      <Hide hide={isLoading}>
+      <Hide hide={isLoading || countIsZero}>
         <>
           <TableComposable
             aria-label='Popular repositories table'
@@ -308,7 +400,6 @@ const PopularRepositoriesTable = () => {
                     select={{
                       onSelect: selectAllRepos,
                       isSelected: areAllReposSelected,
-                      isHeaderSelectDisabled: areAllReposAdded,
                     }}
                   />
                 </Hide>
@@ -321,28 +412,28 @@ const PopularRepositoriesTable = () => {
               </Tr>
             </Thead>
             <Tbody>
-              {popularData.map(
-                (
-                  {
-                    uuid,
-                    existing_name,
-                    suggested_name,
-                    url,
-                    distribution_arch,
-                    distribution_versions,
-                    gpg_key,
-                    metadata_verification,
-                  },
-                  key,
-                ) => (
+              {popularData.map((repo, key) => {
+                const {
+                  uuid,
+                  existing_name,
+                  suggested_name,
+                  url,
+                  distribution_arch,
+                  distribution_versions,
+                  gpg_key,
+                  metadata_verification,
+                } = repo;
+                return (
                   <Tr key={suggested_name + key}>
                     <Hide hide={!rbac?.write}>
+                      {/* Never disabled because popular repositories can be both added and deleted */}
                       <Td
                         select={{
                           rowIndex: key,
-                          onSelect: (_event, isSelecting) => onSelectRepo(key, isSelecting),
-                          isSelected: uuid ? false : checkedRepositories[key],
-                          disable: !!uuid,
+                          onSelect: (_event, isSelecting) => onSelectRepo(repo, isSelecting),
+                          isSelected: uuid
+                            ? checkedRepositoriesToDelete.has(uuid)
+                            : checkedRepositoriesToAdd.has(url),
                         }}
                       />
                     </Hide>
@@ -379,7 +470,12 @@ const PopularRepositoriesTable = () => {
                         ) : (
                           <Button
                             variant='secondary'
-                            isDisabled={selectedData[key]?.url === url || isFetching || isDeleting}
+                            isDisabled={
+                              selectedData[key]?.url === url ||
+                              isFetching ||
+                              isDeleting ||
+                              isDeletingItems
+                            }
                             onClick={() => {
                               const newData: CreateContentRequest = [];
                               newData[key] = {
@@ -400,30 +496,36 @@ const PopularRepositoriesTable = () => {
                       </ConditionalTooltip>
                     </Td>
                   </Tr>
-                ),
-              )}
+                );
+              })}
             </Tbody>
           </TableComposable>
-          <Flex className={classes.bottomContainer}>
-            <FlexItem />
-            <FlexItem>
-              <Pagination
-                id='bottom-pagination-id'
-                widgetId='bottomPaginationWidgetId'
-                perPageComponent='button'
-                itemCount={count}
-                perPage={perPage}
-                page={page}
-                onSetPage={onSetPage}
-                variant={PaginationVariant.bottom}
-                onPerPageSelect={onPerPageSelect}
-              />
-            </FlexItem>
-          </Flex>
+          <Hide hide={isLoading || countIsZero}>
+            <Flex className={classes.bottomContainer}>
+              <FlexItem />
+              <FlexItem>
+                <Pagination
+                  id='bottom-pagination-id'
+                  widgetId='bottomPaginationWidgetId'
+                  perPageComponent='button'
+                  itemCount={count}
+                  perPage={perPage}
+                  page={page}
+                  onSetPage={onSetPage}
+                  variant={PaginationVariant.bottom}
+                  onPerPageSelect={onPerPageSelect}
+                />
+              </FlexItem>
+            </Flex>
+          </Hide>
         </>
       </Hide>
-      <Hide hide={data.data.length !== 0 || isLoading}>
-        <EmptyTableState clearFilters={() => setSearchValue('')} />
+      <Hide hide={!countIsZero}>
+        <EmptyTableState
+          clearFilters={() => setSearchValue('')}
+          notFiltered={!debouncedSearchValue} // The second item prevents the clear button from being removed abruptly
+          itemName='popular repositories'
+        />
       </Hide>
     </Grid>
   );

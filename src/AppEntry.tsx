@@ -34,11 +34,11 @@ export default function AppEntry({ logger }: AppEntryProps) {
 
   return (
     <ReduxProvider store={store}>
-      <ContextProvider>
-        <QueryClientProvider client={queryClient}>
+      <QueryClientProvider client={queryClient}>
+        <ContextProvider>
           <App />
-        </QueryClientProvider>
-      </ContextProvider>
+        </ContextProvider>
+      </QueryClientProvider>
     </ReduxProvider>
   );
 }

@@ -31,11 +31,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { createUseStyles } from 'react-jss';
 import { SkeletonTable } from '@redhat-cloud-services/frontend-components';
 import Hide from '../../../../components/Hide/Hide';
-import { ContentItem, PackageItem } from '../../../../services/Content/ContentApi';
+import { PackageItem } from '../../../../services/Content/ContentApi';
 import { useGetPackagesQuery } from '../../../../services/Content/ContentQueries';
 import { SearchIcon } from '@patternfly/react-icons';
-import useDebounce from '../../../../services/useDebounce';
+import useDebounce from '../../../../Hooks/useDebounce';
 import EmptyPackageState from './components/EmptyPackageState';
+import { useNavigate, useParams } from 'react-router-dom';
+import useRootPath from '../../../../Hooks/useRootPath';
 
 const useStyles = createUseStyles({
   description: {
@@ -71,17 +73,14 @@ const useStyles = createUseStyles({
   },
 });
 
-interface Props {
-  rowData: ContentItem;
-  closeModal: () => void;
-}
+const perPageKey = 'packagePerPage';
 
-export default function PackageModal({
-  rowData: { name, uuid, package_count: packageCount },
-  closeModal,
-}: Props) {
+export default function PackageModal() {
   const classes = useStyles();
-  const storedPerPage = Number(localStorage.getItem('packagePerPage')) || 20;
+  const { repoUUID: uuid } = useParams();
+  const rootPath = useRootPath();
+  const navigate = useNavigate();
+  const storedPerPage = Number(localStorage.getItem(perPageKey)) || 20;
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(storedPerPage);
   const [searchQuery, setSearchQuery] = useState('');
@@ -106,10 +105,15 @@ export default function PackageModal({
   const {
     isLoading,
     isFetching,
-    error,
     isError,
     data = { data: [], meta: { count: 0, limit: 20, offset: 0 } },
-  } = useGetPackagesQuery(uuid, packageCount, page, perPage, debouncedSearchQuery, sortString);
+  } = useGetPackagesQuery(uuid as string, page, perPage, debouncedSearchQuery, sortString);
+
+  useEffect(() => {
+    if (isError) {
+      onClose();
+    }
+  }, [isError]);
 
   const onSetPage: OnSetPage = (_, newPage) => setPage(newPage);
 
@@ -118,7 +122,7 @@ export default function PackageModal({
 
     setPerPage(newPerPage);
     setPage(newPage);
-    localStorage.setItem('packagePerPage', newPerPage.toString());
+    localStorage.setItem(perPageKey, newPerPage.toString());
   };
 
   const sortParams = (columnIndex: number, isDisabled: boolean): ThProps['sort'] | undefined => {
@@ -137,8 +141,7 @@ export default function PackageModal({
     };
   };
 
-  // Error is caught in the wrapper component
-  if (isError) throw error;
+  const onClose = () => navigate(rootPath);
 
   const {
     data: packageList = [],
@@ -147,7 +150,7 @@ export default function PackageModal({
 
   const fetchingOrLoading = isFetching || isLoading;
 
-  const notLoadingZeroCount = !fetchingOrLoading && !count;
+  const loadingOrZeroCount = fetchingOrLoading || !count;
 
   return (
     <Modal
@@ -156,17 +159,14 @@ export default function PackageModal({
       hasNoBodyWrapper
       aria-label='RPM package modal'
       ouiaId='rpm_package_modal'
+      ouiaSafe={fetchingOrLoading}
       variant={ModalVariant.medium}
       title='Packages'
-      description={
-        <p className={classes.description}>
-          View list of packages for <b>{name}</b>
-        </p>
-      }
+      description={<p className={classes.description}>View list of packages</p>}
       isOpen
-      onClose={closeModal}
+      onClose={onClose}
       footer={
-        <Button key='close' variant='secondary' onClick={closeModal}>
+        <Button key='close' variant='secondary' onClick={onClose}>
           Close
         </Button>
       }
@@ -186,7 +186,7 @@ export default function PackageModal({
               <SearchIcon size='sm' className={classes.searchIcon} />
             </Flex>
             <FlexItem>
-              <Hide hide={notLoadingZeroCount}>
+              <Hide hide={loadingOrZeroCount}>
                 <Pagination
                   id='top-pagination-id'
                   widgetId='topPaginationWidgetId'
@@ -216,18 +216,20 @@ export default function PackageModal({
               ouiaId='packages_table'
               variant='compact'
             >
-              <Thead>
-                <Tr>
-                  {columnHeaders.map((columnHeader, index) => (
-                    <Th
-                      key={columnHeader + '_column'}
-                      sort={sortParams(index, notLoadingZeroCount)}
-                    >
-                      {columnHeader}
-                    </Th>
-                  ))}
-                </Tr>
-              </Thead>
+              <Hide hide={loadingOrZeroCount}>
+                <Thead>
+                  <Tr>
+                    {columnHeaders.map((columnHeader, index) => (
+                      <Th
+                        key={columnHeader + '_column'}
+                        sort={sortParams(index, loadingOrZeroCount)}
+                      >
+                        {columnHeader}
+                      </Th>
+                    ))}
+                  </Tr>
+                </Thead>
+              </Hide>
               <Tbody>
                 {packageList.map(({ name, version, release, arch }: PackageItem, index: number) => (
                   <Tr key={name + index}>
@@ -237,7 +239,7 @@ export default function PackageModal({
                     <Td>{arch}</Td>
                   </Tr>
                 ))}
-                <Hide hide={!notLoadingZeroCount}>
+                <Hide hide={!loadingOrZeroCount}>
                   <EmptyPackageState clearSearch={() => setSearchQuery('')} />
                 </Hide>
               </Tbody>
@@ -246,7 +248,7 @@ export default function PackageModal({
           <Flex className={classes.bottomContainer}>
             <FlexItem />
             <FlexItem>
-              <Hide hide={notLoadingZeroCount}>
+              <Hide hide={loadingOrZeroCount}>
                 <Pagination
                   id='bottom-pagination-id'
                   widgetId='bottomPaginationWidgetId'

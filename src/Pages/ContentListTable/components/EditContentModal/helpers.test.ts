@@ -1,9 +1,6 @@
 import { ContentItem } from '../../../../services/Content/ContentApi';
 import { mapFormikToEditAPIValues, mapToDefaultFormikValues } from './helpers';
 
-
-
-
 it('mapFormikToEditAPIValues', () => {
   const values = [
     {
@@ -16,6 +13,7 @@ it('mapFormikToEditAPIValues', () => {
       expanded: false,
       uuid: 'stuff',
       metadataVerification: false,
+      snapshot: false,
     },
   ];
 
@@ -27,6 +25,7 @@ it('mapFormikToEditAPIValues', () => {
       distribution_versions: ['el7'],
       gpg_key: '',
       uuid: 'stuff',
+      snapshot: false,
       metadata_verification: false,
     },
   ];
@@ -45,10 +44,13 @@ it('mapToDefaultFormikValues', () => {
       distribution_arch: 'stuffAndThings',
       status: 'stuffAndThings',
       last_introspection_error: 'stuffAndThings',
+      last_introspection_time: 'stuffAndThings',
+      failed_introspections_count: 0,
       account_id: 'stuffAndThings',
       org_id: 'stuffAndThings',
       gpg_key: 'stuffAndThings',
       metadata_verification: false,
+      snapshot: false,
     },
   ];
   const mapped = [
@@ -58,6 +60,7 @@ it('mapToDefaultFormikValues', () => {
       arch: 'stuffAndThings',
       versions: ['version1', 'etc'],
       gpgKey: 'stuffAndThings',
+      snapshot: false,
       gpgLoading: false,
       metadataVerification: false,
       expanded: true,

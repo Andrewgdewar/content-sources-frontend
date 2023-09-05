@@ -1,10 +1,9 @@
 import { Button, Text, Tooltip } from '@patternfly/react-core';
 import { createUseStyles } from 'react-jss';
 import { global_disabled_color_100 } from '@patternfly/react-tokens';
-import { useState } from 'react';
-import Hide from '../../../components/Hide/Hide';
+import { useNavigate } from 'react-router-dom';
+
 import { ContentItem } from '../../../services/Content/ContentApi';
-import PackageModal from './PackageModal/PackageModal';
 
 const useStyles = createUseStyles({
   text: {
@@ -22,11 +21,11 @@ interface Props {
 
 const PackageCount = ({ rowData }: Props) => {
   const classes = useStyles();
-  const [modalOpen, setModalOpen] = useState(false);
+  const navigate = useNavigate();
 
   if (!rowData.package_count && rowData.status === 'Pending') {
     return (
-      <Tooltip isContentLeftAligned content='Repository has not been introspected yet'>
+      <Tooltip isContentLeftAligned content='Introspection is in progress'>
         <Text className={classes.text}>N/A</Text>
       </Tooltip>
     );
@@ -41,19 +40,14 @@ const PackageCount = ({ rowData }: Props) => {
   }
 
   return (
-    <>
-      <Hide hide={!modalOpen}>
-        <PackageModal rowData={rowData} closeModal={() => setModalOpen(false)} />
-      </Hide>
-      <Button
-        ouiaId='package_count_button'
-        variant='link'
-        onClick={() => setModalOpen(true)}
-        className={classes.link}
-      >
-        {rowData.package_count}
-      </Button>
-    </>
+    <Button
+      ouiaId='package_count_button'
+      variant='link'
+      className={classes.link}
+      onClick={() => navigate(`${rowData.uuid}/packages`)}
+    >
+      {rowData.package_count}
+    </Button>
   );
 };
 
