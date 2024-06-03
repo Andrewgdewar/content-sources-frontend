@@ -1,14 +1,14 @@
 import { useMemo } from 'react';
-import AdminTaskTable from '../../Pages/AdminTaskTable/AdminTaskTable';
-import ViewPayloadModal from '../../Pages/AdminTaskTable/components/ViewPayloadModal/ViewPayloadModal';
-import ContentListTable from '../../Pages/ContentListTable/ContentListTable';
-import AddContent from '../../Pages/ContentListTable/components/AddContent/AddContent';
-import EditContentModal from '../../Pages/ContentListTable/components/EditContentModal/EditContentModal';
-import DeleteContentModal from '../../Pages/ContentListTable/components/DeleteContentModal/DeleteContentModal';
-import PackageModal from '../../Pages/ContentListTable/components/PackageModal/PackageModal';
-import PopularRepositoriesTable from '../../Pages/PopularRepositoriesTable/PopularRepositoriesTable';
+import AdminTaskTable from '../../Pages/Repositories/AdminTaskTable/AdminTaskTable';
+import ViewPayloadModal from '../../Pages/Repositories/AdminTaskTable/components/ViewPayloadModal/ViewPayloadModal';
+import ContentListTable from '../../Pages/Repositories/ContentListTable/ContentListTable';
+import AddContent from '../../Pages/Repositories/ContentListTable/components/AddContent/AddContent';
+import EditContentModal from '../../Pages/Repositories/ContentListTable/components/EditContentModal/EditContentModal';
+import DeleteContentModal from '../../Pages/Repositories/ContentListTable/components/DeleteContentModal/DeleteContentModal';
+import PackageModal from '../../Pages/Repositories/ContentListTable/components/PackageModal/PackageModal';
+import PopularRepositoriesTable from '../../Pages/Repositories/PopularRepositoriesTable/PopularRepositoriesTable';
 import { useAppContext } from '../../middleware/AppContext';
-import SnapshotListModal from '../../Pages/ContentListTable/components/SnapshotListModal/SnapshotListModal';
+import SnapshotListModal from '../../Pages/Repositories/ContentListTable/components/SnapshotListModal/SnapshotListModal';
 import {
   ADD_ROUTE,
   ADMIN_TASKS_ROUTE,
@@ -18,7 +18,7 @@ import {
   REPOSITORIES_ROUTE,
   TabbedRouteItem,
 } from '../constants';
-import SnapshotDetailsModal from '../../Pages/ContentListTable/components/SnapshotDetailsModal/SnapshotDetailsModal';
+import SnapshotDetailsModal from '../../Pages/Repositories/ContentListTable/components/SnapshotDetailsModal/SnapshotDetailsModal';
 import { NoPermissionsPage } from '../../components/NoPermissionsPage/NoPermissionsPage';
 
 export default function useRepositoryRoutes(): TabbedRouteItem[] {

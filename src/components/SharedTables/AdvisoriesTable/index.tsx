@@ -10,7 +10,7 @@ import {
   Thead,
   Tr,
 } from '@patternfly/react-table';
-import EmptyPackageState from '../../../Pages/ContentListTable/components/PackageModal/components/EmptyPackageState';
+import EmptyPackageState from '../../../Pages/Repositories/ContentListTable/components/PackageModal/components/EmptyPackageState';
 import { ErrataItem } from '../../../services/Content/ContentApi';
 import Hide from '../../Hide/Hide';
 import { Flex, FlexItem, Grid, Stack, Text } from '@patternfly/react-core';

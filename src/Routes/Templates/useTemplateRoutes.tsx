@@ -1,9 +1,16 @@
 import { useMemo } from 'react';
 import { useAppContext } from '../../middleware/AppContext';
-import { ADD_ROUTE, EDIT_ROUTE, TEMPLATES_ROUTE, TabbedRouteItem } from '../constants';
-import TemplatesTable from '../../Pages/TemplatesTable/TemplatesTable';
-import { AddTemplate } from '../../Pages/TemplatesTable/components/AddTemplate/AddTemplate';
+import {
+  ADD_ROUTE,
+  EDIT_ROUTE,
+  TEMPLATES_ROUTE,
+  TEMPLATE_DETAILS_ROUTE,
+  TabbedRouteItem,
+} from '../constants';
+import TemplatesTable from '../../Pages/Templates/TemplatesTable/TemplatesTable';
+import { AddTemplate } from '../../Pages/Templates/TemplatesTable/components/AddTemplate/AddTemplate';
 import { NoPermissionsPage } from '../../components/NoPermissionsPage/NoPermissionsPage';
+import TemplateDetails from '../../Pages/Templates/TemplateDetails/TemplateDetails';
 
 export default function useTemplateRoutes(): TabbedRouteItem[] {
   const { features, rbac, chrome } = useAppContext();
@@ -15,6 +22,12 @@ export default function useTemplateRoutes(): TabbedRouteItem[] {
       chrome?.isProd()
         ? []
         : [
+            {
+              title: 'Templates',
+              route: TEMPLATE_DETAILS_ROUTE,
+              Element: TemplateDetails,
+              ChildRoutes: [],
+            },
             {
               title: 'Templates',
               route: TEMPLATES_ROUTE,

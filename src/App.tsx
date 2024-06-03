@@ -10,7 +10,7 @@ import Routes from './Routes';
 import { useAppContext } from './middleware/AppContext';
 import { ContentOrigin, FilterData } from './services/Content/ContentApi';
 import { useContentListQuery } from './services/Content/ContentQueries';
-import { perPageKey } from './Pages/ContentListTable/ContentListTable';
+import { perPageKey } from './Pages/Repositories/ContentListTable/ContentListTable';
 import { REPOSITORIES_ROUTE } from './Routes/constants';
 
 export default function App() {
