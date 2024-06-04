@@ -1,13 +1,10 @@
 import { render } from '@testing-library/react';
-import {
-  useGetSnapshotsByDates,
-  useContentListQuery,
-} from '../../../../../../services/Content/ContentQueries';
+import { useGetSnapshotsByDates, useContentListQuery } from 'services/Content/ContentQueries';
 import SetUpDateStep from './SetUpDateStep';
 import { useAddTemplateContext } from '../AddTemplateContext';
-import { defaultContentItem, defaultSnapshotsByDateResponse } from '../../../../../../testingHelpers';
+import { defaultContentItem, defaultSnapshotsByDateResponse } from 'testingHelpers';
 
-jest.mock('../../../../../services/Content/ContentQueries', () => ({
+jest.mock('services/Content/ContentQueries', () => ({
   useGetSnapshotsByDates: jest.fn(),
   useContentListQuery: jest.fn(),
 }));

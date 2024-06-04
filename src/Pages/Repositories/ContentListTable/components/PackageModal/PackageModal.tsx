@@ -16,15 +16,15 @@ import { InnerScrollContainer } from '@patternfly/react-table';
 import { global_BackgroundColor_100, global_Color_200 } from '@patternfly/react-tokens';
 import { useEffect, useState } from 'react';
 import { createUseStyles } from 'react-jss';
-import Hide from '../../../../../components/Hide/Hide';
-import { ContentOrigin } from '../../../../../services/Content/ContentApi';
-import { useGetPackagesQuery } from '../../../../../services/Content/ContentQueries';
+import Hide from 'components/Hide/Hide';
+import { ContentOrigin } from 'services/Content/ContentApi';
+import { useGetPackagesQuery } from 'services/Content/ContentQueries';
 import { SearchIcon } from '@patternfly/react-icons';
-import useDebounce from '../../../../../Hooks/useDebounce';
+import useDebounce from 'Hooks/useDebounce';
 import { useNavigate, useParams } from 'react-router-dom';
-import useRootPath from '../../../../../Hooks/useRootPath';
-import { useAppContext } from '../../../../../middleware/AppContext';
-import PackagesTable from '../../../../../components/SharedTables/PackagesTable';
+import useRootPath from 'Hooks/useRootPath';
+import { useAppContext } from 'middleware/AppContext';
+import PackagesTable from 'components/SharedTables/PackagesTable';
 
 const useStyles = createUseStyles({
   description: {

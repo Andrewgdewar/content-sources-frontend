@@ -12,20 +12,20 @@ import { OutlinedQuestionCircleIcon } from '@patternfly/react-icons';
 import { global_Color_200 } from '@patternfly/react-tokens';
 import { useEffect, useState } from 'react';
 import { createUseStyles } from 'react-jss';
-import Hide from '../../../../../components/Hide/Hide';
+import Hide from 'components/Hide/Hide';
 import {
   CONTENT_ITEM_KEY,
   useEditContentQuery,
   useFetchContent,
-} from '../../../../../services/Content/ContentQueries';
+} from 'services/Content/ContentQueries';
 import { useQueryClient } from 'react-query';
 import { useLocation, useNavigate } from 'react-router-dom';
 import EditContentForm from './EditContentForm';
-import { EditContentRequest } from '../../../../../services/Content/ContentApi';
+import { EditContentRequest } from 'services/Content/ContentApi';
 import { isEqual } from 'lodash';
 import { mapToContentItemsToEditContentRequest } from './helpers';
 import { useContentListOutletContext } from '../../ContentListTable';
-import useRootPath from '../../../../../Hooks/useRootPath';
+import useRootPath from 'Hooks/useRootPath';
 
 const useStyles = createUseStyles({
   description: {

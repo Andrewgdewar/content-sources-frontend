@@ -1,7 +1,7 @@
 import { render, fireEvent } from '@testing-library/react';
 import DeleteKebab from './DeleteKebab';
 
-jest.mock('../../middleware/AppContext', () => ({
+jest.mock('middleware/AppContext', () => ({
   useAppContext: () => ({ rbac: { read: true, write: true } }),
 }));
 

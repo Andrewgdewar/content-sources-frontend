@@ -1,15 +1,15 @@
 import { render } from '@testing-library/react';
-import { ReactQueryTestWrapper, defaultIntrospectTask } from '../../../testingHelpers';
+import { ReactQueryTestWrapper, defaultIntrospectTask } from 'testingHelpers';
 import AdminTaskTable from './AdminTaskTable';
-import { useAdminTaskListQuery } from '../../../services/AdminTasks/AdminTaskQueries';
-import { formatDateDDMMMYYYY } from '../../../helpers';
+import { useAdminTaskListQuery } from 'services/AdminTasks/AdminTaskQueries';
+import { formatDateDDMMMYYYY } from 'helpers';
 
-jest.mock('../../services/AdminTasks/AdminTaskQueries', () => ({
+jest.mock('services/AdminTasks/AdminTaskQueries', () => ({
   useAdminTaskListQuery: jest.fn(),
   useFetchAdminTaskQuery: () => ({ fetchAdminTask: () => undefined, isLoading: false }),
 }));
 
-jest.mock('../../middleware/AppContext', () => ({
+jest.mock('middleware/AppContext', () => ({
   useAppContext: () => ({}),
 }));
 

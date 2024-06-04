@@ -3,14 +3,11 @@ import {
   ReactQueryTestWrapper,
   defaultPopularRepository,
   testRepositoryParamsResponse,
-} from '../../../testingHelpers';
+} from 'testingHelpers';
 import PopularRepositoriesTable from './PopularRepositoriesTable';
-import {
-  usePopularRepositoriesQuery,
-  useRepositoryParams,
-} from '../../../services/Content/ContentQueries';
+import { usePopularRepositoriesQuery, useRepositoryParams } from 'services/Content/ContentQueries';
 
-jest.mock('../../services/Content/ContentQueries', () => ({
+jest.mock('services/Content/ContentQueries', () => ({
   useRepositoryParams: jest.fn(),
   usePopularRepositoriesQuery: jest.fn(),
   useAddPopularRepositoryQuery: () => ({ isLoading: false }),
@@ -19,7 +16,7 @@ jest.mock('../../services/Content/ContentQueries', () => ({
   useFetchGpgKey: () => ({ fetchGpgKey: () => '' }),
 }));
 
-jest.mock('../../middleware/AppContext', () => ({
+jest.mock('middleware/AppContext', () => ({
   useAppContext: () => ({}),
 }));
 

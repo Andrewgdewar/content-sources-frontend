@@ -29,7 +29,7 @@ import {
   FilterData,
   IntrospectRepositoryRequestItem,
   ContentOrigin,
-} from '../../../services/Content/ContentApi';
+} from 'services/Content/ContentApi';
 import { SkeletonTable } from '@patternfly/react-component-groups';
 
 import {
@@ -38,20 +38,20 @@ import {
   useIntrospectRepositoryMutate,
   useRepositoryParams,
   useTriggerSnapshot,
-} from '../../../services/Content/ContentQueries';
+} from 'services/Content/ContentQueries';
 import ContentListFilters from './components/ContentListFilters';
-import Hide from '../../../components/Hide/Hide';
-import EmptyTableState from '../../../components/EmptyTableState/EmptyTableState';
+import Hide from 'components/Hide/Hide';
+import EmptyTableState from 'components/EmptyTableState/EmptyTableState';
 import { useQueryClient } from 'react-query';
 import StatusIcon from './components/StatusIcon';
-import UrlWithExternalIcon from '../../../components/UrlWithLinkIcon/UrlWithLinkIcon';
+import UrlWithExternalIcon from 'components/UrlWithLinkIcon/UrlWithLinkIcon';
 import PackageCount from './components/PackageCount';
-import { useAppContext } from '../../../middleware/AppContext';
-import ConditionalTooltip from '../../../components/ConditionalTooltip/ConditionalTooltip';
+import { useAppContext } from 'middleware/AppContext';
+import ConditionalTooltip from 'components/ConditionalTooltip/ConditionalTooltip';
 import dayjs from 'dayjs';
 import ChangedArrows from './components/SnapshotListModal/components/ChangedArrows';
 import { Outlet, useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
-import { ADD_ROUTE, DELETE_ROUTE, EDIT_ROUTE } from '../../../Routes/constants';
+import { ADD_ROUTE, DELETE_ROUTE, EDIT_ROUTE } from 'Routes/constants';
 
 const useStyles = createUseStyles({
   mainContainer: {
@@ -368,8 +368,7 @@ const ContentListTable = () => {
   const selectAllRepos = (_, checked: boolean) => {
     if (checked) {
       const newSet = new Set<string>(checkedRepositories);
-      data.data
-        .forEach((contentItem) => newSet.add(contentItem.uuid));
+      data.data.forEach((contentItem) => newSet.add(contentItem.uuid));
       setCheckedRepositories(newSet);
     } else {
       const newSet = new Set<string>(checkedRepositories);
@@ -619,10 +618,7 @@ const ContentListTable = () => {
                                       )
                                     : 'You do not have the required permissions to perform this action.'
                                 }
-                                show={
-                                  !isRedHatRepository &&
-                                  (!rbac?.repoWrite)
-                                }
+                                show={!isRedHatRepository && !rbac?.repoWrite}
                                 setDisabled
                               >
                                 <ActionsColumn items={rowActions(rowData)} />

@@ -1,9 +1,9 @@
 import { fireEvent, render } from '@testing-library/react';
-import { testRepositoryParamsResponse } from '../../../../testingHelpers';
+import { testRepositoryParamsResponse } from 'testingHelpers';
 import TemplateFilters from './TemplateFilters';
 import { useQueryClient } from 'react-query';
 
-jest.mock('../../../middleware/AppContext', () => ({
+jest.mock('middleware/AppContext', () => ({
   useAppContext: () => ({}),
 }));
 
@@ -11,7 +11,7 @@ jest.mock('react-router-dom', () => ({
   useNavigate: jest.fn(),
 }));
 
-jest.mock('../../../Hooks/useDebounce', () => (value) => value);
+jest.mock('Hooks/useDebounce', () => (value) => value);
 jest.mock('react-query');
 
 beforeAll(() => {

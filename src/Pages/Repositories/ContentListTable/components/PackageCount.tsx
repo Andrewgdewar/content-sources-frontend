@@ -3,7 +3,7 @@ import { createUseStyles } from 'react-jss';
 import { global_disabled_color_100 } from '@patternfly/react-tokens';
 import { useNavigate } from 'react-router-dom';
 
-import { ContentItem } from '../../../../services/Content/ContentApi';
+import { ContentItem } from 'services/Content/ContentApi';
 
 const useStyles = createUseStyles({
   text: {

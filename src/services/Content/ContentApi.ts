@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { objectToUrlParams } from '../../helpers';
+import { objectToUrlParams } from 'helpers';
 import { AdminTask } from '../AdminTasks/AdminTaskApi';
 
 export interface ContentItem {
@@ -203,7 +203,6 @@ export interface SnapshotItem {
   added_counts: ContentCounts;
   removed_counts: ContentCounts;
 }
-
 
 export type SnapshotByDateResponse = {
   data: SnapshotForDate[];

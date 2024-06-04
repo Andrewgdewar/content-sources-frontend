@@ -1,8 +1,8 @@
 import { isEmpty } from 'lodash';
 import * as Yup from 'yup';
 import { FormikErrors } from 'formik';
-import { ValidationResponse } from '../../../../../services/Content/ContentApi';
-import { NotificationPayload } from '../../../../../Hooks/useNotification';
+import { ValidationResponse } from 'services/Content/ContentApi';
+import { NotificationPayload } from 'Hooks/useNotification';
 import ERROR_CODE from './httpErrorCodes.json';
 import { AlertVariant } from '@patternfly/react-core';
 

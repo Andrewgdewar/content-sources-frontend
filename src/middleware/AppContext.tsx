@@ -1,11 +1,11 @@
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-import { Features } from '../services/Features/FeatureApi';
+import { Features } from 'services/Features/FeatureApi';
 import { notificationsReducer } from '@redhat-cloud-services/frontend-components-notifications/redux';
 import { getRegistry as _getRegistry } from '@redhat-cloud-services/frontend-components-utilities/Registry';
 import PackageJson from '../../package.json';
-import { useFetchFeaturesQuery } from '../services/Features/FeatureQueries';
+import { useFetchFeaturesQuery } from 'services/Features/FeatureQueries';
 import { fetchRBAC, Rbac } from './RbacUtils';
-import { ContentOrigin } from '../services/Content/ContentApi';
+import { ContentOrigin } from 'services/Content/ContentApi';
 import useChrome from '@redhat-cloud-services/frontend-components/useChrome';
 import { ChromeAPI } from '@redhat-cloud-services/types';
 
@@ -13,7 +13,7 @@ const getRegistry = _getRegistry as unknown as () => { register: ({ notification
 const { appname } = PackageJson.insights;
 
 export interface AppContextInterface {
-  rbac?: { repoRead: boolean; repoWrite: boolean, templateRead: boolean, templateWrite: boolean};
+  rbac?: { repoRead: boolean; repoWrite: boolean; templateRead: boolean; templateWrite: boolean };
   features: Features | null;
   isFetchingFeatures: boolean;
   contentOrigin: ContentOrigin;

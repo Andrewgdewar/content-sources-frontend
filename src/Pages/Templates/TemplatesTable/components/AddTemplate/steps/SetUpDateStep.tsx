@@ -15,21 +15,18 @@ import {
   Title,
 } from '@patternfly/react-core';
 import { useAddTemplateContext } from '../AddTemplateContext';
-import {
-  useContentListQuery,
-  useGetSnapshotsByDates,
-} from '../../../../../../services/Content/ContentQueries';
+import { useContentListQuery, useGetSnapshotsByDates } from 'services/Content/ContentQueries';
 import { useEffect, useMemo } from 'react';
 import { global_Color_400 } from '@patternfly/react-tokens';
-import Hide from '../../../../../../components/Hide/Hide';
-import { ContentItem, ContentOrigin } from '../../../../../../services/Content/ContentApi';
+import Hide from 'components/Hide/Hide';
+import { ContentItem, ContentOrigin } from 'services/Content/ContentApi';
 import { SkeletonTable } from '@patternfly/react-component-groups';
 import { Table, TableVariant, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
-import ConditionalTooltip from '../../../../../../components/ConditionalTooltip/ConditionalTooltip';
-import { reduceStringToCharsWithEllipsis } from '../../../../../../helpers';
-import UrlWithExternalIcon from '../../../../../../components/UrlWithLinkIcon/UrlWithLinkIcon';
-import PackageCount from '../../../../../Repositories/ContentListTable/components/PackageCount';
-import { REPOSITORIES_ROUTE } from '../../../../../../Routes/constants';
+import ConditionalTooltip from 'components/ConditionalTooltip/ConditionalTooltip';
+import { reduceStringToCharsWithEllipsis } from 'helpers';
+import UrlWithExternalIcon from 'components/UrlWithLinkIcon/UrlWithLinkIcon';
+import PackageCount from 'Pages/Repositories/ContentListTable/components/PackageCount';
+import { REPOSITORIES_ROUTE } from 'Routes/constants';
 import { useHref } from 'react-router-dom';
 import { createUseStyles } from 'react-jss';
 import dayjs from 'dayjs';
@@ -83,7 +80,10 @@ export default function SetUpDateStep() {
 
   const columnHeaders = ['Name', /* 'Label',*/ 'Advisories', 'Packages'];
 
-  const itemsAfterDate = useMemo(() => data?.data?.filter(({ is_after }) => is_after) || [], [data?.data]);
+  const itemsAfterDate = useMemo(
+    () => data?.data?.filter(({ is_after }) => is_after) || [],
+    [data?.data],
+  );
   const hasIsAfter = itemsAfterDate.length > 0;
 
   const { isLoading, data: contentData = { data: [], meta: { count: 0, limit: 20, offset: 0 } } } =

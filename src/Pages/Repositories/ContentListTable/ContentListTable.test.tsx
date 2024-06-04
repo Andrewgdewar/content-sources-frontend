@@ -2,14 +2,14 @@ import {
   ReactQueryTestWrapper,
   defaultContentItemWithSnapshot,
   testRepositoryParamsResponse,
-} from '../../../testingHelpers';
+} from 'testingHelpers';
 import { render, waitFor, fireEvent } from '@testing-library/react';
 import ContentListTable from './ContentListTable';
-import { useContentListQuery, useRepositoryParams } from '../../../services/Content/ContentQueries';
+import { useContentListQuery, useRepositoryParams } from 'services/Content/ContentQueries';
 import AddContent from './components/AddContent/AddContent';
-import { ContentOrigin } from '../../../services/Content/ContentApi';
+import { ContentOrigin } from 'services/Content/ContentApi';
 
-jest.mock('../../services/Content/ContentQueries', () => ({
+jest.mock('services/Content/ContentQueries', () => ({
   useRepositoryParams: jest.fn(),
   useContentListQuery: jest.fn(),
   useAddContentQuery: () => ({ isLoading: false }),
@@ -21,7 +21,7 @@ jest.mock('../../services/Content/ContentQueries', () => ({
   useTriggerSnapshot: () => ({ isLoading: false }),
 }));
 
-jest.mock('../../middleware/AppContext', () => ({
+jest.mock('middleware/AppContext', () => ({
   useAppContext: () => ({
     features: { snapshots: { accessible: true } },
     rbac: { repoWrite: true, repoRead: true },

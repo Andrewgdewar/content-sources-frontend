@@ -16,16 +16,16 @@ import {
 import { global_Color_100 } from '@patternfly/react-tokens';
 import { useEffect, useState } from 'react';
 import { createUseStyles } from 'react-jss';
-import Hide from '../../../../../components/Hide/Hide';
+import Hide from 'components/Hide/Hide';
 import {
   CONTENT_ITEM_KEY,
   useFetchContent,
   useDeleteContentItemMutate,
-} from '../../../../../services/Content/ContentQueries';
+} from 'services/Content/ContentQueries';
 import { useQueryClient } from 'react-query';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useContentListOutletContext } from '../../ContentListTable';
-import useRootPath from '../../../../../Hooks/useRootPath';
+import useRootPath from 'Hooks/useRootPath';
 
 const useStyles = createUseStyles({
   description: {

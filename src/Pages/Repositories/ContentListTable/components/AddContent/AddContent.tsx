@@ -26,7 +26,7 @@ import { global_Color_200, global_link_Color } from '@patternfly/react-tokens';
 import { useFormik } from 'formik';
 import { useEffect, useMemo, useState } from 'react';
 import { createUseStyles } from 'react-jss';
-import Hide from '../../../../../components/Hide/Hide';
+import Hide from 'components/Hide/Hide';
 import {
   isValidURL,
   mapFormikToAPIValues,
@@ -37,26 +37,26 @@ import {
   failedFileUpload,
   getDefaultFormikValues,
 } from './helpers';
-import useNotification from '../../../../../Hooks/useNotification';
+import useNotification from 'Hooks/useNotification';
 import ContentValidity from './components/ContentValidity';
 import {
   REPOSITORY_PARAMS_KEY,
   useAddContentQuery,
   useFetchGpgKey,
   useValidateContentList,
-} from '../../../../../services/Content/ContentQueries';
-import { RepositoryParamsResponse } from '../../../../../services/Content/ContentApi';
-import DropdownSelect from '../../../../../components/DropdownSelect_Deprecated/DropdownSelect_Deprecated';
+} from 'services/Content/ContentQueries';
+import { RepositoryParamsResponse } from 'services/Content/ContentApi';
+import DropdownSelect from 'components/DropdownSelect_Deprecated/DropdownSelect_Deprecated';
 import { useQueryClient } from 'react-query';
-import ConditionalTooltip from '../../../../../components/ConditionalTooltip/ConditionalTooltip';
+import ConditionalTooltip from 'components/ConditionalTooltip/ConditionalTooltip';
 import { isEmpty, isEqual } from 'lodash';
-import useDeepCompareEffect from '../../../../../Hooks/useDeepCompareEffect';
-import useDebounce from '../../../../../Hooks/useDebounce';
+import useDeepCompareEffect from 'Hooks/useDeepCompareEffect';
+import useDebounce from 'Hooks/useDebounce';
 import { useNavigate } from 'react-router-dom';
 import { useContentListOutletContext } from '../../ContentListTable';
-import useRootPath from '../../../../../Hooks/useRootPath';
-import { useAppContext } from '../../../../../middleware/AppContext';
-import CustomHelperText from '../../../../../components/CustomHelperText/CustomHelperText';
+import useRootPath from 'Hooks/useRootPath';
+import { useAppContext } from 'middleware/AppContext';
+import CustomHelperText from 'components/CustomHelperText/CustomHelperText';
 
 const useStyles = createUseStyles({
   description: {
@@ -671,7 +671,9 @@ const AddContent = () => {
                         name='module-hotfixes-switch'
                         isChecked={modularityFilteringEnabled}
                         onChange={() => {
-                          updateVariable(index, { modularityFilteringEnabled: !modularityFilteringEnabled });
+                          updateVariable(index, {
+                            modularityFilteringEnabled: !modularityFilteringEnabled,
+                          });
                         }}
                       />
                       <Tooltip content='When enabled, modularity filtering prevents updates to packages contained within an enabled module'>

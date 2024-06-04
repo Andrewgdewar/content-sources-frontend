@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 import { useAddTemplateContext } from '../AddTemplateContext';
-import { defaultTemplateItem } from '../../../../../../testingHelpers';
+import { defaultTemplateItem } from 'testingHelpers';
 import DetailStep from './DetailStep';
 
 jest.mock('../AddTemplateContext', () => ({

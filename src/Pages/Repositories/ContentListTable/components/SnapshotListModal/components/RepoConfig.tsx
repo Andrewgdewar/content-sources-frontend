@@ -2,7 +2,7 @@ import { Button, Flex, FlexItem, Icon } from '@patternfly/react-core';
 import { createUseStyles } from 'react-jss';
 import { global_disabled_color_100 } from '@patternfly/react-tokens';
 
-import { useGetRepoConfigFileQuery } from '../../../../../../services/Content/ContentQueries';
+import { useGetRepoConfigFileQuery } from 'services/Content/ContentQueries';
 import { CopyIcon, DownloadIcon } from '@patternfly/react-icons';
 
 const useStyles = createUseStyles({

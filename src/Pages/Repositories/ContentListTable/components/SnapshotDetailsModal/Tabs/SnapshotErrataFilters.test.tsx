@@ -1,8 +1,8 @@
 import { fireEvent, render, waitFor } from '@testing-library/react';
 import SnapshotErrataFilters from './SnapshotErrataFilters';
-import { ContentOrigin } from '../../../../../../services/Content/ContentApi';
+import { ContentOrigin } from 'services/Content/ContentApi';
 
-jest.mock('../../../../../middleware/AppContext', () => ({
+jest.mock('middleware/AppContext', () => ({
   useAppContext: () => ({
     contentOrigin: ContentOrigin.EXTERNAL,
   }),
@@ -12,7 +12,7 @@ jest.mock('react-router-dom', () => ({
   useNavigate: jest.fn(),
 }));
 
-jest.mock('../../../../../Hooks/useDebounce', () => (value) => value);
+jest.mock('Hooks/useDebounce', () => (value) => value);
 
 it('Render loading state (disabled)', () => {
   const { getByRole } = render(

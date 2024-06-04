@@ -23,21 +23,18 @@ import { global_BackgroundColor_100 } from '@patternfly/react-tokens';
 import { useMemo, useState } from 'react';
 import { createUseStyles } from 'react-jss';
 import { SkeletonTable } from '@patternfly/react-component-groups';
-import Hide from '../../../components/Hide/Hide';
-import EmptyTableState from '../../../components/EmptyTableState/EmptyTableState';
+import Hide from 'components/Hide/Hide';
+import EmptyTableState from 'components/EmptyTableState/EmptyTableState';
 import { Outlet, useNavigate } from 'react-router-dom';
-import { TemplateFilterData, TemplateItem } from '../../../services/Templates/TemplateApi';
-import {
-  useDeleteTemplateItemMutate,
-  useTemplateList,
-} from '../../../services/Templates/TemplateQueries';
-import ConditionalTooltip from '../../../components/ConditionalTooltip/ConditionalTooltip';
-import { useAppContext } from '../../../middleware/AppContext';
-import { useRepositoryParams } from '../../../services/Content/ContentQueries';
+import { TemplateFilterData, TemplateItem } from 'services/Templates/TemplateApi';
+import { useDeleteTemplateItemMutate, useTemplateList } from 'services/Templates/TemplateQueries';
+import ConditionalTooltip from 'components/ConditionalTooltip/ConditionalTooltip';
+import { useAppContext } from 'middleware/AppContext';
+import { useRepositoryParams } from 'services/Content/ContentQueries';
 import TemplateFilters from './components/TemplateFilters';
-import { formatDateDDMMMYYYY } from '../../../helpers';
+import { formatDateDDMMMYYYY } from 'helpers';
 import { useQueryClient } from 'react-query';
-import Header from '../../../components/Header/Header';
+import Header from 'components/Header/Header';
 
 const useStyles = createUseStyles({
   mainContainer: {

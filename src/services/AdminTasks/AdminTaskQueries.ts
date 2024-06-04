@@ -7,7 +7,7 @@ import {
   AdminTask,
   getAdminTask,
 } from './AdminTaskApi';
-import useErrorNotification from '../../Hooks/useErrorNotification';
+import useErrorNotification from 'Hooks/useErrorNotification';
 
 export const ADMIN_TASK_LIST_KEY = 'ADMIN_TASK_LIST_KEY';
 export const ADMIN_TASK_KEY = 'ADMIN_TASK_KEY';

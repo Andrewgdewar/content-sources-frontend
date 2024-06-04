@@ -6,16 +6,16 @@ import {
   FlexItem,
   PaginationVariant,
 } from '@patternfly/react-core';
-import Hide from '../../../../../../components/Hide/Hide';
-import { ContentOrigin } from '../../../../../../services/Content/ContentApi';
+import Hide from 'components/Hide/Hide';
+import { ContentOrigin } from 'services/Content/ContentApi';
 import { createUseStyles } from 'react-jss';
 import { global_BackgroundColor_100, global_Color_200 } from '@patternfly/react-tokens';
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import useRootPath from '../../../../../../Hooks/useRootPath';
-import { useAppContext } from '../../../../../../middleware/AppContext';
-import { useGetSnapshotErrataQuery } from '../../../../../../services/Content/ContentQueries';
-import AdvisoriesTable from '../../../../../../components/SharedTables/AdvisoriesTable';
+import useRootPath from 'Hooks/useRootPath';
+import { useAppContext } from 'middleware/AppContext';
+import { useGetSnapshotErrataQuery } from 'services/Content/ContentQueries';
+import AdvisoriesTable from 'components/SharedTables/AdvisoriesTable';
 import SnapshotErrataFilters from './SnapshotErrataFilters';
 import { ThProps } from '@patternfly/react-table';
 
@@ -66,13 +66,7 @@ export function SnapshotErrataTab() {
     setPage(1);
   }, [filterData]);
 
-  const columnSortAttributes = [
-    'name',
-    'synopsis',
-    'type',
-    'severity',
-    'issued_date'
-  ];
+  const columnSortAttributes = ['name', 'synopsis', 'type', 'severity', 'issued_date'];
 
   const sortString = useMemo(
     () =>
@@ -94,7 +88,7 @@ export function SnapshotErrataTab() {
     filterData.search,
     filterData.type,
     filterData.severity,
-    sortString
+    sortString,
   );
 
   useEffect(() => {
@@ -135,7 +129,7 @@ export function SnapshotErrataTab() {
     },
     columnIndex,
   });
-  
+
   return (
     <Grid className={classes.mainContainer}>
       <InputGroup className={classes.topContainer}>

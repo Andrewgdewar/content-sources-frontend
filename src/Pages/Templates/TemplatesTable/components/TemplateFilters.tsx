@@ -11,20 +11,20 @@ import {
   InputGroupText,
 } from '@patternfly/react-core';
 import { SelectVariant } from '@patternfly/react-core/deprecated';
-import DropdownSelect from '../../../../components/DropdownSelect_Deprecated/DropdownSelect_Deprecated';
+import DropdownSelect from 'components/DropdownSelect_Deprecated/DropdownSelect_Deprecated';
 import { FilterIcon, SearchIcon } from '@patternfly/react-icons';
 import { global_BackgroundColor_100 } from '@patternfly/react-tokens';
-import Hide from '../../../../components/Hide/Hide';
-import { RepositoryParamsResponse } from '../../../../services/Content/ContentApi';
+import Hide from 'components/Hide/Hide';
+import { RepositoryParamsResponse } from 'services/Content/ContentApi';
 import { useQueryClient } from 'react-query';
-import { REPOSITORY_PARAMS_KEY } from '../../../../services/Content/ContentQueries';
-import useDebounce from '../../../../Hooks/useDebounce';
+import { REPOSITORY_PARAMS_KEY } from 'services/Content/ContentQueries';
+import useDebounce from 'Hooks/useDebounce';
 import { createUseStyles } from 'react-jss';
 import { isEmpty } from 'lodash';
-import { useAppContext } from '../../../../middleware/AppContext';
-import ConditionalTooltip from '../../../../components/ConditionalTooltip/ConditionalTooltip';
+import { useAppContext } from 'middleware/AppContext';
+import ConditionalTooltip from 'components/ConditionalTooltip/ConditionalTooltip';
 import { useNavigate } from 'react-router-dom';
-import { TemplateFilterData } from '../../../../services/Templates/TemplateApi';
+import { TemplateFilterData } from 'services/Templates/TemplateApi';
 
 interface Props {
   isLoading?: boolean;

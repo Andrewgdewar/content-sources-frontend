@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useAppContext } from '../../middleware/AppContext';
+import { useAppContext } from 'middleware/AppContext';
 import {
   ADD_ROUTE,
   EDIT_ROUTE,
@@ -9,7 +9,7 @@ import {
 } from '../constants';
 import TemplatesTable from '../../Pages/Templates/TemplatesTable/TemplatesTable';
 import { AddTemplate } from '../../Pages/Templates/TemplatesTable/components/AddTemplate/AddTemplate';
-import { NoPermissionsPage } from '../../components/NoPermissionsPage/NoPermissionsPage';
+import { NoPermissionsPage } from 'components/NoPermissionsPage/NoPermissionsPage';
 import TemplateDetails from '../../Pages/Templates/TemplateDetails/TemplateDetails';
 
 export default function useTemplateRoutes(): TabbedRouteItem[] {

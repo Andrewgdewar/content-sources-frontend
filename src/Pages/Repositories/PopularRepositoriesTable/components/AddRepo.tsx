@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@patternfly/react-core';
 
-import { useAppContext } from '../../../../middleware/AppContext';
+import { useAppContext } from 'middleware/AppContext';
 import { global_disabled_color_100, global_disabled_color_200 } from '@patternfly/react-tokens';
 import { createUseStyles } from 'react-jss';
 import {

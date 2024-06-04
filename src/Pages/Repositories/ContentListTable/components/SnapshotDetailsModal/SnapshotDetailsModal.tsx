@@ -9,15 +9,15 @@ import {
   Tabs,
 } from '@patternfly/react-core';
 import { InnerScrollContainer } from '@patternfly/react-table';
-import { ContentOrigin } from '../../../../../services/Content/ContentApi';
+import { ContentOrigin } from 'services/Content/ContentApi';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import useRootPath from '../../../../../Hooks/useRootPath';
-import { useAppContext } from '../../../../../middleware/AppContext';
+import useRootPath from 'Hooks/useRootPath';
+import { useAppContext } from 'middleware/AppContext';
 import { useEffect, useState } from 'react';
 import { SnapshotPackagesTab } from './Tabs/SnapshotPackagesTab';
 import { createUseStyles } from 'react-jss';
 import { SnapshotSelector } from './SnapshotSelector';
-import { REPOSITORIES_ROUTE } from '../../../../../Routes/constants';
+import { REPOSITORIES_ROUTE } from 'Routes/constants';
 import { SnapshotErrataTab } from './Tabs/SnapshotErrataTab';
 
 const useStyles = createUseStyles({

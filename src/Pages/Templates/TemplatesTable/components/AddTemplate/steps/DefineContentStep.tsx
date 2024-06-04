@@ -11,10 +11,10 @@ import {
   Title,
 } from '@patternfly/react-core';
 import { useAddTemplateContext } from '../AddTemplateContext';
-import DropdownMenu from '../../../../../../components/DropdownMenu/DropdownMenu';
+import DropdownMenu from 'components/DropdownMenu/DropdownMenu';
 import { global_Color_300 } from '@patternfly/react-tokens';
 import { createUseStyles } from 'react-jss';
-import ConditionalTooltip from '../../../../../../components/ConditionalTooltip/ConditionalTooltip';
+import ConditionalTooltip from 'components/ConditionalTooltip/ConditionalTooltip';
 
 const useStyles = createUseStyles({
   global_300: {

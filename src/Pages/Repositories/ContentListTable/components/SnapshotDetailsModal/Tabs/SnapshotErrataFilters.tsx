@@ -16,10 +16,10 @@ import { FilterIcon, SearchIcon } from '@patternfly/react-icons';
 import { global_BackgroundColor_100 } from '@patternfly/react-tokens';
 
 import { createUseStyles } from 'react-jss';
-import useDebounce from '../../../../../../Hooks/useDebounce';
-import Hide from '../../../../../../components/Hide/Hide';
-import SeverityWithIcon from '../../../../../../components/SeverityWithIcon/SeverityWithIcon';
-import DropdownSelect from '../../../../../../components/DropdownSelect/DropdownSelect';
+import useDebounce from 'Hooks/useDebounce';
+import Hide from 'components/Hide/Hide';
+import SeverityWithIcon from 'components/SeverityWithIcon/SeverityWithIcon';
+import DropdownSelect from 'components/DropdownSelect/DropdownSelect';
 import { isEmpty } from 'lodash';
 
 const useStyles = createUseStyles({
@@ -116,7 +116,7 @@ export default function SnapshotErrataFilters({ isLoading, setFilterData, filter
             onSelect={(_, val) => addOrRemoveTypes(val as string)}
             options={
               ['Security', 'Bugfix', 'Enhancement', 'Other'].map((type) => ({
-                key: type,
+                // key: type,
                 value: type,
                 hasCheckbox: true,
                 isSelected: types.includes(type),
@@ -132,7 +132,7 @@ export default function SnapshotErrataFilters({ isLoading, setFilterData, filter
             onSelect={(_, val) => addOrRemoveSeverity(val as string)}
             options={
               ['Critical', 'Important', 'Moderate', 'Low', 'Unknown'].map((sev) => ({
-                key: sev,
+                // key: sev,
                 value: sev,
                 hasCheckbox: true,
                 isSelected: severities.includes(sev),
@@ -159,7 +159,7 @@ export default function SnapshotErrataFilters({ isLoading, setFilterData, filter
                 toggleProps={{ isDisabled: isLoading, icon: <FilterIcon /> }}
                 ouiaId='filter_type'
                 options={filters.map((optionName) => ({
-                  key: optionName,
+                  //   key: optionName,
                   value: optionName,
                   children: optionName,
                 }))}

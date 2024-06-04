@@ -5,8 +5,8 @@ import { global_BackgroundColor_100 } from '@patternfly/react-tokens';
 
 import { createUseStyles } from 'react-jss';
 import { last } from 'lodash';
-import Header from '../../components/Header/Header';
-import RepositoryQuickStart from '../../components/QuickStart/RepositoryQuickStart';
+import Header from 'components/Header/Header';
+import RepositoryQuickStart from 'components/QuickStart/RepositoryQuickStart';
 import { TabbedRouteItem } from '../constants';
 
 const useStyles = createUseStyles({

@@ -18,22 +18,22 @@ import {
 import { useAddTemplateContext } from '../AddTemplateContext';
 import { global_Color_300 } from '@patternfly/react-tokens';
 import { createUseStyles } from 'react-jss';
-import { ContentItem, ContentOrigin } from '../../../../../../services/Content/ContentApi';
+import { ContentItem, ContentOrigin } from 'services/Content/ContentApi';
 import { useState } from 'react';
-import { useContentListQuery } from '../../../../../../services/Content/ContentQueries';
+import { useContentListQuery } from 'services/Content/ContentQueries';
 import { SearchIcon } from '@patternfly/react-icons';
-import EmptyTableState from '../../../../../../components/EmptyTableState/EmptyTableState';
+import EmptyTableState from 'components/EmptyTableState/EmptyTableState';
 import { useHref } from 'react-router-dom';
-import Hide from '../../../../../../components/Hide/Hide';
+import Hide from 'components/Hide/Hide';
 import { SkeletonTable } from '@patternfly/react-component-groups';
 import { Table, TableVariant, Tbody, Td, Th, ThProps, Thead, Tr } from '@patternfly/react-table';
-import UrlWithExternalIcon from '../../../../../../components/UrlWithLinkIcon/UrlWithLinkIcon';
-import PackageCount from '../../../../../Repositories/ContentListTable/components/PackageCount';
-import useDebounce from '../../../../../../Hooks/useDebounce';
-import { REPOSITORIES_ROUTE } from '../../../../../../Routes/constants';
-import TdWithTooltip from '../../../../../../components/TdWithTooltip/TdWithTooltip';
-import { reduceStringToCharsWithEllipsis } from '../../../../../../helpers';
-import ConditionalTooltip from '../../../../../../components/ConditionalTooltip/ConditionalTooltip';
+import UrlWithExternalIcon from 'components/UrlWithLinkIcon/UrlWithLinkIcon';
+import PackageCount from 'Pages/Repositories/ContentListTable/components/PackageCount';
+import useDebounce from 'Hooks/useDebounce';
+import { REPOSITORIES_ROUTE } from 'Routes/constants';
+import TdWithTooltip from 'components/TdWithTooltip/TdWithTooltip';
+import { reduceStringToCharsWithEllipsis } from 'helpers';
+import ConditionalTooltip from 'components/ConditionalTooltip/ConditionalTooltip';
 
 const useStyles = createUseStyles({
   global_300: {
@@ -243,13 +243,9 @@ export default function RedhatRepositoriesStep() {
             >
               <Thead>
                 <Tr>
-                  <Th />
+                  <Th screenReaderText='empty' />
                   {columnHeaders.map((columnHeader, index) => (
-                    <Th
-                      //   width={index === 0 ? 50 : undefined}
-                      key={columnHeader + 'column'}
-                      sort={sortParams(index)}
-                    >
+                    <Th key={columnHeader + 'column'} sort={sortParams(index)}>
                       {columnHeader}
                     </Th>
                   ))}

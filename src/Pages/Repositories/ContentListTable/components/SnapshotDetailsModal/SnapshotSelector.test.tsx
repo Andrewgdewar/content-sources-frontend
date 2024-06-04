@@ -1,12 +1,12 @@
 import { render } from '@testing-library/react';
 import { SnapshotSelector } from './SnapshotSelector';
-import { useGetSnapshotList } from '../../../../../services/Content/ContentQueries';
-import { defaultMetaItem, defaultSnapshotItem } from '../../../../../testingHelpers';
-import { formatDateDDMMMYYYY } from '../../../../../helpers';
+import { useGetSnapshotList } from 'services/Content/ContentQueries';
+import { defaultMetaItem, defaultSnapshotItem } from 'testingHelpers';
+import { formatDateDDMMMYYYY } from 'helpers';
 
-jest.mock('../../../../Hooks/useRootPath', () => () => 'someUrl');
+jest.mock('Hooks/useRootPath', () => () => 'someUrl');
 
-jest.mock('../../../../services/Content/ContentQueries', () => ({
+jest.mock('services/Content/ContentQueries', () => ({
   useGetSnapshotList: jest.fn(),
 }));
 

@@ -1,15 +1,15 @@
 import { render } from '@testing-library/react';
 import TemplatesTable from './TemplatesTable';
-import { useTemplateList } from '../../../services/Templates/TemplateQueries';
-import { ReactQueryTestWrapper, defaultTemplateItem } from '../../../testingHelpers';
-import { formatDateDDMMMYYYY } from '../../../helpers';
+import { useTemplateList } from 'services/Templates/TemplateQueries';
+import { ReactQueryTestWrapper, defaultTemplateItem } from 'testingHelpers';
+import { formatDateDDMMMYYYY } from 'helpers';
 
-jest.mock('../../services/Templates/TemplateQueries', () => ({
+jest.mock('services/Templates/TemplateQueries', () => ({
   useTemplateList: jest.fn(),
   useDeleteTemplateItemMutate: () => ({ mutate: () => undefined, isLoading: false }),
 }));
 
-jest.mock('../../middleware/AppContext', () => ({
+jest.mock('middleware/AppContext', () => ({
   useAppContext: () => ({}),
 }));
 
@@ -18,13 +18,12 @@ jest.mock('react-router-dom', () => ({
   Outlet: () => <></>,
 }));
 
-jest.mock('../../middleware/AppContext', () => ({
+jest.mock('middleware/AppContext', () => ({
   useAppContext: () => ({
     rbac: { repoWrite: true, templateRead: true },
     setContentOrigin: () => {},
   }),
 }));
-
 
 it('expect TemplatesTable to render empty state', () => {
   (useTemplateList as jest.Mock).mockImplementation(() => ({

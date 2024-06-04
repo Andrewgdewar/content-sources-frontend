@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
-import { ContentOrigin, PackageItem } from '../../../../../../services/Content/ContentApi';
-import { useGetSnapshotPackagesQuery } from '../../../../../../services/Content/ContentQueries';
+import { ContentOrigin, PackageItem } from 'services/Content/ContentApi';
+import { useGetSnapshotPackagesQuery } from 'services/Content/ContentQueries';
 import { SnapshotPackagesTab } from './SnapshotPackagesTab';
 
 const packageItem: PackageItem = {
@@ -16,15 +16,15 @@ const packageItem: PackageItem = {
   uuid: '',
 };
 
-jest.mock('../../../../../Hooks/useDebounce', () => (value) => value);
+jest.mock('Hooks/useDebounce', () => (value) => value);
 
-jest.mock('../../../../../Hooks/useRootPath', () => () => 'someUrl');
+jest.mock('Hooks/useRootPath', () => () => 'someUrl');
 
-jest.mock('../../../../../services/Content/ContentQueries', () => ({
+jest.mock('services/Content/ContentQueries', () => ({
   useGetSnapshotPackagesQuery: jest.fn(),
 }));
 
-jest.mock('../../../../../Hooks/useDebounce', () => (value) => value);
+jest.mock('Hooks/useDebounce', () => (value) => value);
 
 jest.mock('react-router-dom', () => ({
   useNavigate: jest.fn(),
@@ -33,7 +33,7 @@ jest.mock('react-router-dom', () => ({
   }),
 }));
 
-jest.mock('../../../../../middleware/AppContext', () => ({
+jest.mock('middleware/AppContext', () => ({
   useAppContext: () => ({
     contentOrigin: ContentOrigin.EXTERNAL,
   }),

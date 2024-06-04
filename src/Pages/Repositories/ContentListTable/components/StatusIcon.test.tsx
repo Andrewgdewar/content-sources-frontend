@@ -1,8 +1,8 @@
 import { render, waitFor } from '@testing-library/react';
 import StatusIcon from './StatusIcon';
-import { defaultContentItem } from '../../../../testingHelpers';
+import { defaultContentItem } from 'testingHelpers';
 
-jest.mock('../../../middleware/AppContext', () => ({
+jest.mock('middleware/AppContext', () => ({
   useAppContext: () => ({ rbac: { read: true, write: true } }),
 }));
 

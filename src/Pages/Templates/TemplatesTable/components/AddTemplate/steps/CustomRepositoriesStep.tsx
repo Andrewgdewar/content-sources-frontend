@@ -19,26 +19,23 @@ import {
 import { useAddTemplateContext } from '../AddTemplateContext';
 import { global_Color_300 } from '@patternfly/react-tokens';
 import { createUseStyles } from 'react-jss';
-import { ContentItem, ContentOrigin } from '../../../../../../services/Content/ContentApi';
+import { ContentItem, ContentOrigin } from 'services/Content/ContentApi';
 import { useState } from 'react';
-import {
-  CONTENT_LIST_KEY,
-  useContentListQuery,
-} from '../../../../../../services/Content/ContentQueries';
+import { CONTENT_LIST_KEY, useContentListQuery } from 'services/Content/ContentQueries';
 import { ExternalLinkAltIcon, SearchIcon, SyncAltIcon } from '@patternfly/react-icons';
-import EmptyTableState from '../../../../../../components/EmptyTableState/EmptyTableState';
+import EmptyTableState from 'components/EmptyTableState/EmptyTableState';
 import { useHref } from 'react-router-dom';
-import Hide from '../../../../../../components/Hide/Hide';
+import Hide from 'components/Hide/Hide';
 import { SkeletonTable } from '@patternfly/react-component-groups';
 import { Table, TableVariant, Tbody, Td, Th, ThProps, Thead, Tr } from '@patternfly/react-table';
-import UrlWithExternalIcon from '../../../../../../components/UrlWithLinkIcon/UrlWithLinkIcon';
-import PackageCount from '../../../../../Repositories/ContentListTable/components/PackageCount';
-import StatusIcon from '../../../../../Repositories/ContentListTable/components/StatusIcon';
-import useDebounce from '../../../../../../Hooks/useDebounce';
-import { ADD_ROUTE, REPOSITORIES_ROUTE } from '../../../../../../Routes/constants';
-import TdWithTooltip from '../../../../../../components/TdWithTooltip/TdWithTooltip';
-import ConditionalTooltip from '../../../../../../components/ConditionalTooltip/ConditionalTooltip';
-import { reduceStringToCharsWithEllipsis } from '../../../../../../helpers';
+import UrlWithExternalIcon from 'components/UrlWithLinkIcon/UrlWithLinkIcon';
+import PackageCount from 'Pages/Repositories/ContentListTable/components/PackageCount';
+import StatusIcon from 'Pages/Repositories/ContentListTable/components/StatusIcon';
+import useDebounce from 'Hooks/useDebounce';
+import { ADD_ROUTE, REPOSITORIES_ROUTE } from 'Routes/constants';
+import TdWithTooltip from 'components/TdWithTooltip/TdWithTooltip';
+import ConditionalTooltip from 'components/ConditionalTooltip/ConditionalTooltip';
+import { reduceStringToCharsWithEllipsis } from 'helpers';
 
 const useStyles = createUseStyles({
   global_300: {
@@ -266,7 +263,7 @@ export default function CustomRepositoriesStep() {
             >
               <Thead>
                 <Tr>
-                  <Th />
+                  <Th screenReaderText='empty' />
                   {columnHeaders.map((columnHeader, index) => (
                     <Th
                       width={index === 0 ? 50 : undefined}

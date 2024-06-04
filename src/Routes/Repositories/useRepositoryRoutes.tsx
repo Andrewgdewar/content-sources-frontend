@@ -7,7 +7,7 @@ import EditContentModal from '../../Pages/Repositories/ContentListTable/componen
 import DeleteContentModal from '../../Pages/Repositories/ContentListTable/components/DeleteContentModal/DeleteContentModal';
 import PackageModal from '../../Pages/Repositories/ContentListTable/components/PackageModal/PackageModal';
 import PopularRepositoriesTable from '../../Pages/Repositories/PopularRepositoriesTable/PopularRepositoriesTable';
-import { useAppContext } from '../../middleware/AppContext';
+import { useAppContext } from 'middleware/AppContext';
 import SnapshotListModal from '../../Pages/Repositories/ContentListTable/components/SnapshotListModal/SnapshotListModal';
 import {
   ADD_ROUTE,
@@ -19,7 +19,7 @@ import {
   TabbedRouteItem,
 } from '../constants';
 import SnapshotDetailsModal from '../../Pages/Repositories/ContentListTable/components/SnapshotDetailsModal/SnapshotDetailsModal';
-import { NoPermissionsPage } from '../../components/NoPermissionsPage/NoPermissionsPage';
+import { NoPermissionsPage } from 'components/NoPermissionsPage/NoPermissionsPage';
 
 export default function useRepositoryRoutes(): TabbedRouteItem[] {
   const { features, rbac } = useAppContext();

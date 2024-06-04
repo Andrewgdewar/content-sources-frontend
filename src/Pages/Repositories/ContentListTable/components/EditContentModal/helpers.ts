@@ -1,4 +1,4 @@
-import { ContentItem, EditContentRequest } from '../../../../../services/Content/ContentApi';
+import { ContentItem, EditContentRequest } from 'services/Content/ContentApi';
 
 export interface FormikEditValues {
   name: string;

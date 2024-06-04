@@ -1,5 +1,5 @@
 import { FormikErrors } from 'formik';
-import { ValidationResponse } from '../../../../../services/Content/ContentApi';
+import { ValidationResponse } from 'services/Content/ContentApi';
 import {
   FormikValues,
   REGEX_URL,

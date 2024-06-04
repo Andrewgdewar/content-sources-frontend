@@ -1,8 +1,8 @@
 import { fireEvent, render } from '@testing-library/react';
 import { AddRepo } from './AddRepo';
-import { useAppContext } from '../../../../middleware/AppContext';
+import { useAppContext } from 'middleware/AppContext';
 
-jest.mock('../../../middleware/AppContext', () => ({
+jest.mock('middleware/AppContext', () => ({
   useAppContext: jest.fn(),
 }));
 

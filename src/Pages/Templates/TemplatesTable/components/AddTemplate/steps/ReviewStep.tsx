@@ -1,7 +1,7 @@
 import { ExpandableSection, Flex, Grid, Text, TextVariants, Title } from '@patternfly/react-core';
 import { useAddTemplateContext } from '../AddTemplateContext';
 import { useMemo, useState } from 'react';
-import { formatDateDDMMMYYYY } from '../../../../../../helpers';
+import { formatDateDDMMMYYYY } from 'helpers';
 
 export default function ReviewStep() {
   const [expanded, setExpanded] = useState(new Set([0]));

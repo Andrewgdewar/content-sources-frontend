@@ -7,17 +7,14 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { TemplateRequest } from '../../../../../services/Templates/TemplateApi';
+import { TemplateRequest } from 'services/Templates/TemplateApi';
 import { QueryClient, useQueryClient } from 'react-query';
-import {
-  useContentListQuery,
-  useRepositoryParams,
-} from '../../../../../services/Content/ContentQueries';
-import { ContentOrigin, NameLabel } from '../../../../../services/Content/ContentApi';
+import { useContentListQuery, useRepositoryParams } from 'services/Content/ContentQueries';
+import { ContentOrigin, NameLabel } from 'services/Content/ContentApi';
 import { formatApiTemplateTime, hardcodeRedHatReposByArchAndVersion } from '../templateHelpers';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useFetchTemplate } from '../../../../../services/Templates/TemplateQueries';
-import useRootPath from '../../../../../Hooks/useRootPath';
+import { useFetchTemplate } from 'services/Templates/TemplateQueries';
+import useRootPath from 'Hooks/useRootPath';
 
 export interface AddTemplateContextInterface {
   queryClient: QueryClient;

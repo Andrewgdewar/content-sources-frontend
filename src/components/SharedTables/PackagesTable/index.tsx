@@ -1,6 +1,6 @@
 import { Table, TableVariant, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
 import EmptyPackageState from '../../../Pages/Repositories/ContentListTable/components/PackageModal/components/EmptyPackageState';
-import { PackageItem } from '../../../services/Content/ContentApi';
+import { PackageItem } from 'services/Content/ContentApi';
 import Hide from '../../Hide/Hide';
 import { Grid } from '@patternfly/react-core';
 import { SkeletonTable } from '@patternfly/react-component-groups';

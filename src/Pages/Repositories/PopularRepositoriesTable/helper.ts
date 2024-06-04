@@ -1,4 +1,4 @@
-import { PopularRepository, CreateContentRequestItem } from '../../../services/Content/ContentApi';
+import { PopularRepository, CreateContentRequestItem } from 'services/Content/ContentApi';
 
 export const repoToRequestItem = (
   repo: PopularRepository,

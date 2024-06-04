@@ -1,11 +1,11 @@
 import { render } from '@testing-library/react';
-import { ReactQueryTestWrapper } from '../../testingHelpers';
+import { ReactQueryTestWrapper } from 'testingHelpers';
 import EmptyTableState from './EmptyTableState';
 import { Button } from '@patternfly/react-core';
 
-jest.mock('../../Hooks/useNotification', () => () => ({ notify: () => null }));
+jest.mock('Hooks/useNotification', () => () => ({ notify: () => null }));
 
-jest.mock('../../middleware/AppContext', () => ({
+jest.mock('middleware/AppContext', () => ({
   useAppContext: () => ({}),
 }));
 

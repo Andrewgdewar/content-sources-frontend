@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 import { useAddTemplateContext } from '../AddTemplateContext';
-import { defaultTemplateItem, testRepositoryParamsResponse } from '../../../../../../testingHelpers';
+import { defaultTemplateItem, testRepositoryParamsResponse } from 'testingHelpers';
 import DefineContentStep from './DefineContentStep';
 
 jest.mock('../AddTemplateContext', () => ({

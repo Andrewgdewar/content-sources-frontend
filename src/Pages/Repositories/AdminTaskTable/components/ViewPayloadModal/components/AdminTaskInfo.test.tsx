@@ -1,10 +1,10 @@
 import { render } from '@testing-library/react';
 import AdminTaskInfo from './AdminTaskInfo';
-import { AdminTask } from '../../../../../../services/AdminTasks/AdminTaskApi';
-import { defaultIntrospectTask } from '../../../../../../testingHelpers';
-import { formatDateDDMMMYYYY } from '../../../../../../helpers';
+import { AdminTask } from 'services/AdminTasks/AdminTaskApi';
+import { defaultIntrospectTask } from 'testingHelpers';
+import { formatDateDDMMMYYYY } from 'helpers';
 
-jest.mock('../../../../../middleware/AppContext', () => ({
+jest.mock('middleware/AppContext', () => ({
   useAppContext: () => ({ rbac: { read: true, write: true } }),
 }));
 

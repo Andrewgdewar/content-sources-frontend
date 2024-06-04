@@ -10,14 +10,14 @@ import {
 } from '@patternfly/react-core';
 import { createUseStyles } from 'react-jss';
 import { createRef, useEffect, useMemo, useState } from 'react';
-import { AdminTask } from '../../../../../services/AdminTasks/AdminTaskApi';
+import { AdminTask } from 'services/AdminTasks/AdminTaskApi';
 import AdminTaskInfo from './components/AdminTaskInfo';
 import ReactJson from 'react18-json-view';
-import Hide from '../../../../../components/Hide/Hide';
-import { useFetchAdminTaskQuery } from '../../../../../services/AdminTasks/AdminTaskQueries';
+import Hide from 'components/Hide/Hide';
+import { useFetchAdminTaskQuery } from 'services/AdminTasks/AdminTaskQueries';
 import { useNavigate, useParams } from 'react-router-dom';
-import useRootPath from '../../../../../Hooks/useRootPath';
-import { ADMIN_TASKS_ROUTE } from '../../../../../Routes/constants';
+import useRootPath from 'Hooks/useRootPath';
+import { ADMIN_TASKS_ROUTE } from 'Routes/constants';
 
 const useStyles = createUseStyles({
   jsonView: {

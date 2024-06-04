@@ -22,14 +22,14 @@ import { global_BackgroundColor_100 } from '@patternfly/react-tokens';
 import { useMemo, useState } from 'react';
 import { createUseStyles } from 'react-jss';
 import { SkeletonTable } from '@patternfly/react-component-groups';
-import Hide from '../../../components/Hide/Hide';
-import EmptyTableState from '../../../components/EmptyTableState/EmptyTableState';
+import Hide from 'components/Hide/Hide';
+import EmptyTableState from 'components/EmptyTableState/EmptyTableState';
 import AdminTaskFilters from './components/AdminTaskFilters';
 import StatusIcon from './components/StatusIcon';
-import { useAdminTaskListQuery } from '../../../services/AdminTasks/AdminTaskQueries';
-import { AdminTaskFilterData, AdminTask } from '../../../services/AdminTasks/AdminTaskApi';
+import { useAdminTaskListQuery } from 'services/AdminTasks/AdminTaskQueries';
+import { AdminTaskFilterData, AdminTask } from 'services/AdminTasks/AdminTaskApi';
 import { Outlet, useNavigate } from 'react-router-dom';
-import { formatDateDDMMMYYYY } from '../../../helpers';
+import { formatDateDDMMMYYYY } from 'helpers';
 
 const useStyles = createUseStyles({
   mainContainer: {
@@ -77,13 +77,7 @@ const AdminTaskTable = () => {
   const notFiltered =
     filterData.statuses?.length === 0 && filterData.accountId === '' && filterData.orgId === '';
 
-  const columnSortAttributes = [
-    'org_id',
-    'account_id',
-    'typename',
-    'queued_at',
-    'status',
-  ];
+  const columnSortAttributes = ['org_id', 'account_id', 'typename', 'queued_at', 'status'];
 
   const sortString = useMemo(
     () => columnSortAttributes[activeSortIndex] + ':' + activeSortDirection,

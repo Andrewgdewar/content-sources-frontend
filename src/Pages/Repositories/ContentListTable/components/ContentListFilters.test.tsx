@@ -1,15 +1,15 @@
 import { fireEvent, render } from '@testing-library/react';
-import { testRepositoryParamsResponse } from '../../../../testingHelpers';
+import { testRepositoryParamsResponse } from 'testingHelpers';
 import AddContent from './AddContent/AddContent';
 import ContentListFilters from './ContentListFilters';
 import { useQueryClient } from 'react-query';
-import { ContentOrigin } from '../../../../services/Content/ContentApi';
+import { ContentOrigin } from 'services/Content/ContentApi';
 
 jest.mock('./AddContent/AddContent');
 
 (AddContent as jest.Mock).mockImplementation(() => 'Add Content');
 
-jest.mock('../../../middleware/AppContext', () => ({
+jest.mock('middleware/AppContext', () => ({
   useAppContext: () => ({}),
 }));
 
@@ -17,7 +17,7 @@ jest.mock('react-router-dom', () => ({
   useNavigate: jest.fn(),
 }));
 
-jest.mock('../../../Hooks/useDebounce', () => (value) => value);
+jest.mock('Hooks/useDebounce', () => (value) => value);
 jest.mock('react-query');
 
 beforeAll(() => {

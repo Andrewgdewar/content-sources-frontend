@@ -4,8 +4,8 @@ import {
   DescriptionListGroup,
   DescriptionListTerm,
 } from '@patternfly/react-core';
-import { AdminTask } from '../../../../../../services/AdminTasks/AdminTaskApi';
-import { formatDateDDMMMYYYY } from '../../../../../../helpers';
+import { AdminTask } from 'services/AdminTasks/AdminTaskApi';
+import { formatDateDDMMMYYYY } from 'helpers';
 
 export interface AdminTaskInfoProps {
   adminTask: AdminTask;

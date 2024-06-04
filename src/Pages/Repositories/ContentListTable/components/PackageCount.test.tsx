@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 import PackageCount from './PackageCount';
-import { defaultContentItem } from '../../../../testingHelpers';
+import { defaultContentItem } from 'testingHelpers';
 
 jest.mock('react-router-dom', () => ({
   useNavigate: jest.fn(),

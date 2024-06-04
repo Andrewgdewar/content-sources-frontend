@@ -39,8 +39,8 @@ import {
   ErrataResponse,
 } from './ContentApi';
 import { ADMIN_TASK_LIST_KEY } from '../AdminTasks/AdminTaskQueries';
-import useErrorNotification from '../../Hooks/useErrorNotification';
-import useNotification from '../../Hooks/useNotification';
+import useErrorNotification from 'Hooks/useErrorNotification';
+import useNotification from 'Hooks/useNotification';
 
 export const CONTENT_LIST_KEY = 'CONTENT_LIST_KEY';
 export const POPULAR_REPOSITORIES_LIST_KEY = 'POPULAR_REPOSITORIES_LIST_KEY';

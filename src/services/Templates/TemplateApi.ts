@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { Links, Meta } from '../Content/ContentApi';
-import { objectToUrlParams } from '../../helpers';
+import { objectToUrlParams } from 'helpers';
 
 export interface TemplateRequest {
   arch: string;

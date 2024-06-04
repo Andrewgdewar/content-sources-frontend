@@ -3,12 +3,12 @@ import {
   passingValidationErrorData,
   ReactQueryTestWrapper,
   testRepositoryParamsResponse,
-} from '../../../../../testingHelpers';
+} from 'testingHelpers';
 import EditContentModal from './EditContentModal';
 import { fireEvent, render, waitFor } from '@testing-library/react';
-import { useValidateContentList } from '../../../../../services/Content/ContentQueries';
+import { useValidateContentList } from 'services/Content/ContentQueries';
 import { useQueryClient } from 'react-query';
-import { ContentItem } from '../../../../../services/Content/ContentApi';
+import { ContentItem } from 'services/Content/ContentApi';
 
 const editItem: ContentItem = {
   ...defaultContentItem,
@@ -20,7 +20,7 @@ const editItem: ContentItem = {
   metadata_verification: false,
 };
 
-jest.mock('../../../../services/Content/ContentQueries', () => ({
+jest.mock('services/Content/ContentQueries', () => ({
   useEditContentQuery: () => ({ isLoading: false }),
   useValidateContentList: jest.fn(),
   useFetchGpgKey: () => ({ fetchGpgKey: () => '' }),
@@ -32,10 +32,10 @@ jest.mock('react-query', () => ({
   useQueryClient: jest.fn(),
 }));
 
-jest.mock('../../../../Hooks/useRootPath', () => () => 'someUrl');
-jest.mock('../../../../Hooks/useNotification', () => () => ({ notify: () => null }));
-jest.mock('../../../../Hooks/useDebounce', () => (value) => value);
-jest.mock('../../../../middleware/AppContext', () => ({ useAppContext: () => ({}) }));
+jest.mock('Hooks/useRootPath', () => () => 'someUrl');
+jest.mock('Hooks/useNotification', () => () => ({ notify: () => null }));
+jest.mock('Hooks/useDebounce', () => (value) => value);
+jest.mock('middleware/AppContext', () => ({ useAppContext: () => ({}) }));
 
 jest.mock('react-router-dom', () => ({
   useNavigate: jest.fn(),

@@ -9,9 +9,9 @@ import {
   SnapshotForDate,
   SnapshotItem,
   ValidationResponse,
-} from './services/Content/ContentApi';
-import { AdminTask } from './services/AdminTasks/AdminTaskApi';
-import { TemplateItem } from './services/Templates/TemplateApi';
+} from 'services/Content/ContentApi';
+import { AdminTask } from 'services/AdminTasks/AdminTaskApi';
+import { TemplateItem } from 'services/Templates/TemplateApi';
 
 const queryClient = new QueryClient({
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -259,7 +259,7 @@ export const defaultTemplateItem: TemplateItem = {
   ],
 };
 
-export const defaultSnapshotForDateItem: SnapshotForDate =   {
+export const defaultSnapshotForDateItem: SnapshotForDate = {
   repository_uuid: defaultContentItem.uuid,
   is_after: true,
   match: {
@@ -290,10 +290,8 @@ export const defaultSnapshotForDateItem: SnapshotForDate =   {
     removed_counts: {},
     url: '',
   },
-}
+};
 
 export const defaultSnapshotsByDateResponse: SnapshotByDateResponse = {
-  data: [
-    defaultSnapshotForDateItem
-  ]
+  data: [defaultSnapshotForDateItem],
 };

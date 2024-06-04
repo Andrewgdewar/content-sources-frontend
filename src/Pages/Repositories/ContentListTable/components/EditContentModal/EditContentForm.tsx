@@ -19,19 +19,19 @@ import {
 import { useFormik } from 'formik';
 import { useEffect, useMemo, useState } from 'react';
 import { createUseStyles } from 'react-jss';
-import Hide from '../../../../../components/Hide/Hide';
-import useDebounce from '../../../../../Hooks/useDebounce';
+import Hide from 'components/Hide/Hide';
+import useDebounce from 'Hooks/useDebounce';
 import {
   REPOSITORY_PARAMS_KEY,
   useFetchGpgKey,
   useValidateContentList,
-} from '../../../../../services/Content/ContentQueries';
+} from 'services/Content/ContentQueries';
 import {
   ContentItem,
   EditContentRequest,
   RepositoryParamsResponse,
-} from '../../../../../services/Content/ContentApi';
-import DropdownSelect from '../../../../../components/DropdownSelect_Deprecated/DropdownSelect_Deprecated';
+} from 'services/Content/ContentApi';
+import DropdownSelect from 'components/DropdownSelect_Deprecated/DropdownSelect_Deprecated';
 import { useQueryClient } from 'react-query';
 import {
   failedFileUpload,
@@ -43,11 +43,11 @@ import {
 import ContentValidity from '../AddContent/components/ContentValidity';
 import { FormikEditValues, mapFormikToEditAPIValues, mapToDefaultFormikValues } from './helpers';
 import { isEmpty, isEqual } from 'lodash';
-import ConditionalTooltip from '../../../../../components/ConditionalTooltip/ConditionalTooltip';
-import useNotification from '../../../../../Hooks/useNotification';
-import useDeepCompareEffect from '../../../../../Hooks/useDeepCompareEffect';
-import { useAppContext } from '../../../../../middleware/AppContext';
-import CustomHelperText from '../../../../../components/CustomHelperText/CustomHelperText';
+import ConditionalTooltip from 'components/ConditionalTooltip/ConditionalTooltip';
+import useNotification from 'Hooks/useNotification';
+import useDeepCompareEffect from 'Hooks/useDeepCompareEffect';
+import { useAppContext } from 'middleware/AppContext';
+import CustomHelperText from 'components/CustomHelperText/CustomHelperText';
 
 const green = global_success_color_100.value;
 
@@ -542,7 +542,9 @@ const EditContentForm = ({
                       name='module-hotfixes-switch'
                       isChecked={modularityFilteringEnabled}
                       onChange={() => {
-                        updateVariable(index, { modularityFilteringEnabled: !modularityFilteringEnabled });
+                        updateVariable(index, {
+                          modularityFilteringEnabled: !modularityFilteringEnabled,
+                        });
                       }}
                     />
                     <Tooltip content='When enabled, modularity filtering prevents updates to packages contained within an enabled module'>

@@ -5,12 +5,12 @@ import {
   defaultContentItemWithSnapshot,
   defaultMetaItem,
   defaultSnapshotItem,
-} from '../../../../../testingHelpers';
-import { useFetchContent, useGetSnapshotList } from '../../../../../services/Content/ContentQueries';
+} from 'testingHelpers';
+import { useFetchContent, useGetSnapshotList } from 'services/Content/ContentQueries';
 
-jest.mock('../../../../Hooks/useRootPath', () => () => 'someUrl');
+jest.mock('Hooks/useRootPath', () => () => 'someUrl');
 
-jest.mock('../../../../services/Content/ContentQueries', () => ({
+jest.mock('services/Content/ContentQueries', () => ({
   useFetchContent: jest.fn(),
   useGetSnapshotList: jest.fn(),
   useGetRepoConfigFileQuery: () => ({ mutateAsync: jest.fn() }),
@@ -23,7 +23,7 @@ jest.mock('react-router-dom', () => ({
   }),
 }));
 
-jest.mock('../../../../middleware/AppContext', () => ({
+jest.mock('middleware/AppContext', () => ({
   useAppContext: () => ({ rbac: { read: true, write: true } }),
 }));
 

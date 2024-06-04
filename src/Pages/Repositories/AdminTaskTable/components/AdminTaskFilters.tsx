@@ -11,13 +11,13 @@ import {
   InputGroupText,
 } from '@patternfly/react-core';
 import { SelectVariant } from '@patternfly/react-core/deprecated';
-import DropdownSelect from '../../../../components/DropdownSelect_Deprecated/DropdownSelect_Deprecated';
+import DropdownSelect from 'components/DropdownSelect_Deprecated/DropdownSelect_Deprecated';
 import { FilterIcon, SearchIcon } from '@patternfly/react-icons';
 import { global_BackgroundColor_100 } from '@patternfly/react-tokens';
-import Hide from '../../../../components/Hide/Hide';
-import useDebounce from '../../../../Hooks/useDebounce';
+import Hide from 'components/Hide/Hide';
+import useDebounce from 'Hooks/useDebounce';
 import { createUseStyles } from 'react-jss';
-import { AdminTaskFilterData } from '../../../../services/AdminTasks/AdminTaskApi';
+import { AdminTaskFilterData } from 'services/AdminTasks/AdminTaskApi';
 
 interface Props {
   isLoading?: boolean;

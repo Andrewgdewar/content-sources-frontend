@@ -1,5 +1,5 @@
-import { CreateContentRequestItem } from '../../../services/Content/ContentApi';
-import { defaultPopularRepository } from '../../../testingHelpers';
+import { CreateContentRequestItem } from 'services/Content/ContentApi';
+import { defaultPopularRepository } from 'testingHelpers';
 import { repoToRequestItem } from './helper';
 
 it('repoToRequestItem', () => {

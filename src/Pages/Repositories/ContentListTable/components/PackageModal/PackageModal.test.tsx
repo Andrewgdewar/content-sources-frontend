@@ -1,8 +1,8 @@
 import { render } from '@testing-library/react';
 import PackageModal from './PackageModal';
-import { PackageItem } from '../../../../../services/Content/ContentApi';
-import { ReactQueryTestWrapper } from '../../../../../testingHelpers';
-import { useGetPackagesQuery } from '../../../../../services/Content/ContentQueries';
+import { PackageItem } from 'services/Content/ContentApi';
+import { ReactQueryTestWrapper } from 'testingHelpers';
+import { useGetPackagesQuery } from 'services/Content/ContentQueries';
 
 const packageItem: PackageItem = {
   // Used variables
@@ -17,9 +17,9 @@ const packageItem: PackageItem = {
   uuid: '',
 };
 
-jest.mock('../../../../Hooks/useRootPath', () => () => 'someUrl');
+jest.mock('Hooks/useRootPath', () => () => 'someUrl');
 
-jest.mock('../../../../services/Content/ContentQueries', () => ({
+jest.mock('services/Content/ContentQueries', () => ({
   useGetPackagesQuery: jest.fn(),
 }));
 
@@ -30,7 +30,7 @@ jest.mock('react-router-dom', () => ({
   }),
 }));
 
-jest.mock('../../../../middleware/AppContext', () => ({
+jest.mock('middleware/AppContext', () => ({
   useAppContext: () => ({ rbac: { read: true, write: true } }),
 }));
 

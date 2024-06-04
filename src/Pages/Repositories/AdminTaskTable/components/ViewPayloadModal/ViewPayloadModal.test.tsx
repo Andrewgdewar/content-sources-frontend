@@ -1,22 +1,18 @@
-import {
-  defaultIntrospectTask,
-  defaultSnapshotTask,
-  ReactQueryTestWrapper,
-} from '../../../../../testingHelpers';
+import { defaultIntrospectTask, defaultSnapshotTask, ReactQueryTestWrapper } from 'testingHelpers';
 import ViewPayloadModal from './ViewPayloadModal';
 import { fireEvent, render } from '@testing-library/react';
-import { AdminTask } from '../../../../../services/AdminTasks/AdminTaskApi';
-import { useFetchAdminTaskQuery } from '../../../../../services/AdminTasks/AdminTaskQueries';
+import { AdminTask } from 'services/AdminTasks/AdminTaskApi';
+import { useFetchAdminTaskQuery } from 'services/AdminTasks/AdminTaskQueries';
 
-jest.mock('../../../../Hooks/useNotification', () => () => ({ notify: () => null }));
+jest.mock('Hooks/useNotification', () => () => ({ notify: () => null }));
 
-jest.mock('../../../../services/AdminTasks/AdminTaskQueries', () => ({
+jest.mock('services/AdminTasks/AdminTaskQueries', () => ({
   useFetchAdminTaskQuery: jest.fn(),
 }));
 
-jest.mock('../../../../Hooks/useRootPath', () => () => 'someUrl');
-jest.mock('../../../../Hooks/useDebounce', () => (value) => value);
-jest.mock('../../../../middleware/AppContext', () => ({ useAppContext: () => ({}) }));
+jest.mock('Hooks/useRootPath', () => () => 'someUrl');
+jest.mock('Hooks/useDebounce', () => (value) => value);
+jest.mock('middleware/AppContext', () => ({ useAppContext: () => ({}) }));
 
 jest.mock('react-router-dom', () => ({
   useNavigate: jest.fn(),

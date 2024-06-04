@@ -11,7 +11,7 @@ import {
   Tr,
 } from '@patternfly/react-table';
 import EmptyPackageState from '../../../Pages/Repositories/ContentListTable/components/PackageModal/components/EmptyPackageState';
-import { ErrataItem } from '../../../services/Content/ContentApi';
+import { ErrataItem } from 'services/Content/ContentApi';
 import Hide from '../../Hide/Hide';
 import { Flex, FlexItem, Grid, Stack, Text } from '@patternfly/react-core';
 import { SkeletonTable } from '@patternfly/react-component-groups';
@@ -21,11 +21,11 @@ import {
   global_success_color_200,
 } from '@patternfly/react-tokens';
 import { createUseStyles } from 'react-jss';
-import useDeepCompareEffect from '../../../Hooks/useDeepCompareEffect';
+import useDeepCompareEffect from 'Hooks/useDeepCompareEffect';
 import React, { useState } from 'react';
 import { capitalize, isEmpty } from 'lodash';
 import { OffIcon, OnIcon } from '@patternfly/react-icons';
-import { formatDateDDMMMYYYY, formatDescription, reduceStringToCharsWithEllipsis } from '../../../helpers';
+import { formatDateDDMMMYYYY, formatDescription, reduceStringToCharsWithEllipsis } from 'helpers';
 import ErrataTypeIcon from '../../ErrataTypeIcon/ErrataTypeIcon';
 import SeverityWithIcon from '../../SeverityWithIcon/SeverityWithIcon';
 import UrlWithExternalIcon from '../../UrlWithLinkIcon/UrlWithLinkIcon';
@@ -64,7 +64,7 @@ export default function AdvisoriesTable({
   errataList,
   clearSearch,
   perPage,
-  sortParams
+  sortParams,
 }: Props) {
   const classes = useStyles();
   const columnHeaders = [
@@ -72,7 +72,7 @@ export default function AdvisoriesTable({
     { name: 'Synopsis' },
     { name: 'Type', width: 15 },
     { name: 'Severity', width: 10 },
-    { name: 'Publish date', width: 15},
+    { name: 'Publish date', width: 15 },
   ];
   const [expandState, setExpandState] = useState({});
 
@@ -96,16 +96,22 @@ export default function AdvisoriesTable({
           <Hide hide={isLoadingOrZeroCount}>
             <Thead>
               <Tr>
-                <Th />
-                {columnHeaders.map(({ name, width }, index) => (
-                  name === 'Name' || name === 'Synopsis' ?  
-                  <Th width={width as BaseCellProps['width']} key={index + name + '_header'}>
-                    {name}
-                  </Th> :
-                  <Th width={width as BaseCellProps['width']} key={index + name + '_header'} sort={sortParams(index)}>
-                  {name}
-                </Th>
-                ))}
+                <Th screenReaderText='empty' />
+                {columnHeaders.map(({ name, width }, index) =>
+                  name === 'Name' || name === 'Synopsis' ? (
+                    <Th width={width as BaseCellProps['width']} key={index + name + '_header'}>
+                      {name}
+                    </Th>
+                  ) : (
+                    <Th
+                      width={width as BaseCellProps['width']}
+                      key={index + name + '_header'}
+                      sort={sortParams(index)}
+                    >
+                      {name}
+                    </Th>
+                  ),
+                )}
               </Tr>
             </Thead>
           </Hide>
@@ -167,7 +173,9 @@ export default function AdvisoriesTable({
                             </Flex>
                             <Grid>
                               <strong>Description</strong>
-                              <Text className={classes.retainSpaces}>{formatDescription(description)}</Text>
+                              <Text className={classes.retainSpaces}>
+                                {formatDescription(description)}
+                              </Text>
                             </Grid>
                             <Grid>
                               <strong>Reboot</strong>

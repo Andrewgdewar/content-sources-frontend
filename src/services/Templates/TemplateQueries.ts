@@ -1,6 +1,6 @@
 import { QueryClient, useMutation, useQuery } from 'react-query';
 
-import useErrorNotification from '../../Hooks/useErrorNotification';
+import useErrorNotification from 'Hooks/useErrorNotification';
 import {
   TemplateFilterData,
   TemplateItem,
@@ -13,7 +13,7 @@ import {
   EditTemplateRequest,
   EditTemplate,
 } from './TemplateApi';
-import useNotification from '../../Hooks/useNotification';
+import useNotification from 'Hooks/useNotification';
 import { AlertVariant } from '@patternfly/react-core';
 
 export const FETCH_TEMPLATE_KEY = 'FETCH_TEMPLATE_KEY';

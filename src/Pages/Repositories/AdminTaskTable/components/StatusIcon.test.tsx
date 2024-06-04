@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 import StatusIcon from './StatusIcon';
 
-jest.mock('../../../middleware/AppContext', () => ({
+jest.mock('middleware/AppContext', () => ({
   useAppContext: () => ({ rbac: { read: true, write: true } }),
 }));
 

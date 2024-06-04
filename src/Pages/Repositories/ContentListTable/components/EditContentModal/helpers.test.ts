@@ -1,4 +1,4 @@
-import { ContentItem } from '../../../../../services/Content/ContentApi';
+import { ContentItem } from 'services/Content/ContentApi';
 import { mapFormikToEditAPIValues, mapToDefaultFormikValues } from './helpers';
 
 it('mapFormikToEditAPIValues', () => {

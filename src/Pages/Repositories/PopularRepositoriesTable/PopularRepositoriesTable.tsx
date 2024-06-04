@@ -37,23 +37,23 @@ import {
   useRepositoryParams,
   useAddPopularRepositoryQuery,
   useBulkDeleteContentItemMutate,
-} from '../../../services/Content/ContentQueries';
+} from 'services/Content/ContentQueries';
 import {
   ContentOrigin,
   CreateContentRequest,
   CreateContentRequestItem,
   FilterData,
   PopularRepository,
-} from '../../../services/Content/ContentApi';
-import Hide from '../../../components/Hide/Hide';
+} from 'services/Content/ContentApi';
+import Hide from 'components/Hide/Hide';
 import { useQueryClient } from 'react-query';
-import { useAppContext } from '../../../middleware/AppContext';
-import ConditionalTooltip from '../../../components/ConditionalTooltip/ConditionalTooltip';
-import UrlWithExternalIcon from '../../../components/UrlWithLinkIcon/UrlWithLinkIcon';
+import { useAppContext } from 'middleware/AppContext';
+import ConditionalTooltip from 'components/ConditionalTooltip/ConditionalTooltip';
+import UrlWithExternalIcon from 'components/UrlWithLinkIcon/UrlWithLinkIcon';
 import { SearchIcon } from '@patternfly/react-icons';
-import useDebounce from '../../../Hooks/useDebounce';
-import EmptyTableState from '../../../components/EmptyTableState/EmptyTableState';
-import DeleteKebab from '../../../components/DeleteKebab/DeleteKebab';
+import useDebounce from 'Hooks/useDebounce';
+import EmptyTableState from 'components/EmptyTableState/EmptyTableState';
+import DeleteKebab from 'components/DeleteKebab/DeleteKebab';
 import { repoToRequestItem } from './helper';
 import { AddRepo } from './components/AddRepo';
 import {

@@ -1,9 +1,9 @@
 import { render } from '@testing-library/react';
-import { ReactQueryTestWrapper, defaultContentItem } from '../../../../../testingHelpers';
-import { useFetchContent } from '../../../../../services/Content/ContentQueries';
+import { ReactQueryTestWrapper, defaultContentItem } from 'testingHelpers';
+import { useFetchContent } from 'services/Content/ContentQueries';
 import DeleteContentModal from './DeleteContentModal';
-import { ContentOrigin } from '../../../../../services/Content/ContentApi';
-import { DELETE_ROUTE } from '../../../../../Routes/constants';
+import { ContentOrigin } from 'services/Content/ContentApi';
+import { DELETE_ROUTE } from 'Routes/constants';
 
 jest.mock('react-query', () => ({
   ...jest.requireActual('react-query'),
@@ -30,14 +30,14 @@ jest.mock('../../ContentListTable', () => ({
   }),
 }));
 
-jest.mock('../../../../Hooks/useRootPath', () => () => 'someUrl');
+jest.mock('Hooks/useRootPath', () => () => 'someUrl');
 
-jest.mock('../../../../services/Content/ContentQueries', () => ({
+jest.mock('services/Content/ContentQueries', () => ({
   useDeleteContentItemMutate: () => ({ mutate: () => undefined, isLoading: false }),
   useFetchContent: jest.fn(),
 }));
 
-jest.mock('../../../../middleware/AppContext', () => ({ useAppContext: () => ({}) }));
+jest.mock('middleware/AppContext', () => ({ useAppContext: () => ({}) }));
 
 it('Render Delete Modal', () => {
   const data = defaultContentItem;

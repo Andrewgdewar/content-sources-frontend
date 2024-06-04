@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Features, getFeatures } from './FeatureApi';
-import useErrorNotification from '../../Hooks/useErrorNotification';
+import useErrorNotification from 'Hooks/useErrorNotification';
 
 export const useFetchFeaturesQuery = () => {
   const [isLoading, setIsLoading] = useState(false);

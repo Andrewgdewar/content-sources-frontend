@@ -5,14 +5,14 @@ import {
   ClockIcon,
 } from '@patternfly/react-icons';
 import { Flex, FlexItem, Spinner } from '@patternfly/react-core';
-import StatusText from '../../../../components/StatusText/StatusText';
+import StatusText from 'components/StatusText/StatusText';
 import {
   global_danger_color_100,
   global_success_color_100,
   global_warning_color_100,
 } from '@patternfly/react-tokens';
 import { createUseStyles } from 'react-jss';
-import { AdminTask } from '../../../../services/AdminTasks/AdminTaskApi';
+import { AdminTask } from 'services/AdminTasks/AdminTaskApi';
 
 const red = global_danger_color_100.value;
 const green = global_success_color_100.value;

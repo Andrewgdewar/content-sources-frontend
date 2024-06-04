@@ -3,16 +3,16 @@ import {
   defaultValidationErrorData,
   passingValidationErrorData,
   ReactQueryTestWrapper,
-} from '../../../../../testingHelpers';
+} from 'testingHelpers';
 import AddContent from './AddContent';
 import {
   useAddContentQuery,
   useBulkDeleteContentItemMutate,
   useFetchGpgKey,
   useValidateContentList,
-} from '../../../../../services/Content/ContentQueries';
+} from 'services/Content/ContentQueries';
 
-jest.mock('../../../../services/Content/ContentQueries', () => ({
+jest.mock('services/Content/ContentQueries', () => ({
   useAddContentQuery: jest.fn(),
   useValidateContentList: jest.fn(),
   useFetchGpgKey: jest.fn(),
@@ -34,15 +34,15 @@ jest.mock('../../../../services/Content/ContentQueries', () => ({
   mutateAsync: async () => null,
 }));
 
-jest.mock('../../../../middleware/AppContext', () => ({
+jest.mock('middleware/AppContext', () => ({
   useAppContext: () => ({ rbac: { read: true, write: true } }),
 }));
 
-jest.mock('../../../../Hooks/useDebounce', () => (value) => value);
+jest.mock('Hooks/useDebounce', () => (value) => value);
 
-jest.mock('../../../../Hooks/useRootPath', () => () => 'someUrl');
+jest.mock('Hooks/useRootPath', () => () => 'someUrl');
 
-jest.mock('../../../../Hooks/useNotification', () => () => ({ notify: () => null }));
+jest.mock('Hooks/useNotification', () => () => ({ notify: () => null }));
 
 jest.mock('react-router-dom', () => ({
   useNavigate: () => jest.fn(),

@@ -27,20 +27,20 @@ import { global_BackgroundColor_100, global_Color_200 } from '@patternfly/react-
 import { useEffect, useMemo, useState } from 'react';
 import { createUseStyles } from 'react-jss';
 import { SkeletonTable } from '@patternfly/react-component-groups';
-import Hide from '../../../../../components/Hide/Hide';
-import { ContentOrigin, SnapshotItem } from '../../../../../services/Content/ContentApi';
-import { useFetchContent, useGetSnapshotList } from '../../../../../services/Content/ContentQueries';
-import useDebounce from '../../../../../Hooks/useDebounce';
+import Hide from 'components/Hide/Hide';
+import { ContentOrigin, SnapshotItem } from 'services/Content/ContentApi';
+import { useFetchContent, useGetSnapshotList } from 'services/Content/ContentQueries';
+import useDebounce from 'Hooks/useDebounce';
 import { useNavigate, useParams } from 'react-router-dom';
-import useRootPath from '../../../../../Hooks/useRootPath';
+import useRootPath from 'Hooks/useRootPath';
 import EmptyPackageState from '../PackageModal/components/EmptyPackageState';
 import ChangedArrows from './components/ChangedArrows';
 import { SearchIcon } from '@patternfly/react-icons';
-import { useAppContext } from '../../../../../middleware/AppContext';
+import { useAppContext } from 'middleware/AppContext';
 import RepoConfig from './components/RepoConfig';
-import { REPOSITORIES_ROUTE } from '../../../../../Routes/constants';
+import { REPOSITORIES_ROUTE } from 'Routes/constants';
 import { SnapshotDetailTab } from '../SnapshotDetailsModal/SnapshotDetailsModal';
-import { formatDateDDMMMYYYY } from '../../../../../helpers';
+import { formatDateDDMMMYYYY } from 'helpers';
 
 const useStyles = createUseStyles({
   description: {

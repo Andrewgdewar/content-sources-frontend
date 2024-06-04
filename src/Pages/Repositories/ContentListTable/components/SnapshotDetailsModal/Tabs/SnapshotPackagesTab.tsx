@@ -10,17 +10,17 @@ import {
   PaginationVariant,
 } from '@patternfly/react-core';
 import { SearchIcon } from '@patternfly/react-icons';
-import Hide from '../../../../../../components/Hide/Hide';
-import { ContentOrigin } from '../../../../../../services/Content/ContentApi';
+import Hide from 'components/Hide/Hide';
+import { ContentOrigin } from 'services/Content/ContentApi';
 import { createUseStyles } from 'react-jss';
 import { global_BackgroundColor_100, global_Color_200 } from '@patternfly/react-tokens';
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import useDebounce from '../../../../../../Hooks/useDebounce';
-import useRootPath from '../../../../../../Hooks/useRootPath';
-import { useAppContext } from '../../../../../../middleware/AppContext';
-import { useGetSnapshotPackagesQuery } from '../../../../../../services/Content/ContentQueries';
-import PackagesTable from '../../../../../../components/SharedTables/PackagesTable';
+import useDebounce from 'Hooks/useDebounce';
+import useRootPath from 'Hooks/useRootPath';
+import { useAppContext } from 'middleware/AppContext';
+import { useGetSnapshotPackagesQuery } from 'services/Content/ContentQueries';
+import PackagesTable from 'components/SharedTables/PackagesTable';
 
 const useStyles = createUseStyles({
   description: {

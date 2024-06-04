@@ -1,20 +1,20 @@
 import { render } from '@testing-library/react';
 import { useAddTemplateContext } from '../AddTemplateContext';
-import { defaultContentItem, defaultTemplateItem } from '../../../../../../testingHelpers';
-import { useContentListQuery } from '../../../../../../services/Content/ContentQueries';
+import { defaultContentItem, defaultTemplateItem } from 'testingHelpers';
+import { useContentListQuery } from 'services/Content/ContentQueries';
 import RedhatRepositoriesStep from './RedhatRepositoriesStep';
 
-jest.mock('../../../../../services/Content/ContentQueries', () => ({
+jest.mock('services/Content/ContentQueries', () => ({
   useContentListQuery: jest.fn(),
 }));
 
-jest.mock('../../../../ContentListTable/components/StatusIcon', () => () => 'StatusIcon');
+jest.mock('Pages/Repositories/ContentListTable/components/StatusIcon', () => () => 'StatusIcon');
 
 jest.mock('../AddTemplateContext', () => ({
   useAddTemplateContext: jest.fn(),
 }));
 
-jest.mock('../../../../../Hooks/useDebounce', () => (value) => value);
+jest.mock('Hooks/useDebounce', () => (value) => value);
 
 jest.mock('react-router-dom', () => ({
   useNavigate: jest.fn(),

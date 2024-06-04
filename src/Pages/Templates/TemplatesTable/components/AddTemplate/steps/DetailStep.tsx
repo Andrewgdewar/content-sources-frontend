@@ -10,7 +10,7 @@ import {
 import { useAddTemplateContext } from '../AddTemplateContext';
 import { useState } from 'react';
 import { TemplateValidationSchema } from '../../templateHelpers';
-import CustomHelperText from '../../../../../../components/CustomHelperText/CustomHelperText';
+import CustomHelperText from 'components/CustomHelperText/CustomHelperText';
 
 export default function DetailStep() {
   const { templateRequest, setTemplateRequest } = useAddTemplateContext();

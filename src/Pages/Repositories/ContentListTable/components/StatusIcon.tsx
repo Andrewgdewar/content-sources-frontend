@@ -13,7 +13,7 @@ import {
   StackItem,
   Tooltip,
 } from '@patternfly/react-core';
-import StatusText from '../../../../components/StatusText/StatusText';
+import StatusText from 'components/StatusText/StatusText';
 import {
   global_danger_color_100,
   global_success_color_100,
@@ -22,9 +22,9 @@ import {
 import { createUseStyles } from 'react-jss';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import { ContentItem } from '../../../../services/Content/ContentApi';
-import ConditionalTooltip from '../../../../components/ConditionalTooltip/ConditionalTooltip';
-import { useAppContext } from '../../../../middleware/AppContext';
+import { ContentItem } from 'services/Content/ContentApi';
+import ConditionalTooltip from 'components/ConditionalTooltip/ConditionalTooltip';
+import { useAppContext } from 'middleware/AppContext';
 
 dayjs.extend(relativeTime);
 

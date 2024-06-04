@@ -1,11 +1,11 @@
 import { fireEvent, render } from '@testing-library/react';
 import AdminTaskFilters from './AdminTaskFilters';
 
-jest.mock('../../../middleware/AppContext', () => ({
+jest.mock('middleware/AppContext', () => ({
   useAppContext: () => ({}),
 }));
 
-jest.mock('../../../Hooks/useDebounce', () => (value) => value);
+jest.mock('Hooks/useDebounce', () => (value) => value);
 jest.mock('react-query');
 
 it('Render loading state (disabled)', () => {

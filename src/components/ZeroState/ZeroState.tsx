@@ -5,7 +5,7 @@ import ErrorState from '@redhat-cloud-services/frontend-components/ErrorState';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { createUseStyles } from 'react-jss';
 
-import { useAppContext } from '../../middleware/AppContext';
+import { useAppContext } from 'middleware/AppContext';
 
 const useStyles = createUseStyles({
   minHeight: {
