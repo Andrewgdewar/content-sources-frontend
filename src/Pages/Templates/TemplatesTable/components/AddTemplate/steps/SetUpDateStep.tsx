@@ -24,7 +24,7 @@ import { ContentItem, ContentOrigin } from 'services/Content/ContentApi';
 import { SkeletonTable } from '@patternfly/react-component-groups';
 import { Table, TableVariant, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
 import ConditionalTooltip from 'components/ConditionalTooltip/ConditionalTooltip';
-import { reduceStringToCharsWithEllipsis } from 'helpers';
+import { formatDateForPicker, reduceStringToCharsWithEllipsis } from 'helpers';
 import UrlWithExternalIcon from 'components/UrlWithLinkIcon/UrlWithLinkIcon';
 import PackageCount from 'Pages/Repositories/ContentListTable/components/PackageCount';
 import { REPOSITORIES_ROUTE } from 'Routes/constants';
@@ -152,7 +152,7 @@ export default function SetUpDateStep() {
         </GridItem>
         <FormGroup label='Include repository changes up to this date' required>
           <DatePicker
-            value={templateRequest.date || ''}
+            value={formatDateForPicker(templateRequest.date)}
             required
             requiredDateOptions={{ isRequired: true }}
             validators={dateValidators}

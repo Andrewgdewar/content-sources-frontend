@@ -39,9 +39,10 @@ const useStyles = createUseStyles({
 
 interface Props {
   status: AdminTask['status'];
+  removeText?: boolean;
 }
 
-const StatusIcon = ({ status }: Props) => {
+const StatusIcon = ({ status, removeText = false }: Props) => {
   const classes = useStyles();
 
   switch (status) {
@@ -51,9 +52,11 @@ const StatusIcon = ({ status }: Props) => {
           <FlexItem spacer={{ default: 'spacerSm' }}>
             <Spinner size='md' className={classes.spinner} />
           </FlexItem>
-          <FlexItem>
-            <StatusText color='blue'>Running</StatusText>
-          </FlexItem>
+          {!removeText && (
+            <FlexItem>
+              <StatusText color='blue'>Running</StatusText>
+            </FlexItem>
+          )}
         </Flex>
       );
     case 'failed':
@@ -62,9 +65,11 @@ const StatusIcon = ({ status }: Props) => {
           <FlexItem spacer={{ default: 'spacerSm' }}>
             <ExclamationCircleIcon className={classes.red} />
           </FlexItem>
-          <FlexItem>
-            <StatusText color='red'>Failed</StatusText>
-          </FlexItem>
+          {!removeText && (
+            <FlexItem>
+              <StatusText color='red'>Failed</StatusText>
+            </FlexItem>
+          )}
         </Flex>
       );
     case 'completed':
@@ -73,9 +78,11 @@ const StatusIcon = ({ status }: Props) => {
           <FlexItem spacer={{ default: 'spacerSm' }}>
             <CheckCircleIcon className={classes.green} />
           </FlexItem>
-          <FlexItem>
-            <StatusText color='green'>Completed</StatusText>
-          </FlexItem>
+          {!removeText && (
+            <FlexItem>
+              <StatusText color='green'>Completed</StatusText>
+            </FlexItem>
+          )}
         </Flex>
       );
     case 'canceled':
@@ -84,9 +91,11 @@ const StatusIcon = ({ status }: Props) => {
           <FlexItem spacer={{ default: 'spacerSm' }}>
             <BanIcon className={classes.red} />
           </FlexItem>
-          <FlexItem>
-            <StatusText color='red'>Canceled</StatusText>
-          </FlexItem>
+          {!removeText && (
+            <FlexItem>
+              <StatusText color='red'>Canceled</StatusText>
+            </FlexItem>
+          )}
         </Flex>
       );
     case 'pending':
@@ -95,9 +104,11 @@ const StatusIcon = ({ status }: Props) => {
           <FlexItem spacer={{ default: 'spacerSm' }}>
             <ClockIcon className={classes.gold} />
           </FlexItem>
-          <FlexItem>
-            <StatusText color='gold'>Pending</StatusText>
-          </FlexItem>
+          {!removeText && (
+            <FlexItem>
+              <StatusText color='gold'>Pending</StatusText>
+            </FlexItem>
+          )}
         </Flex>
       );
     default:

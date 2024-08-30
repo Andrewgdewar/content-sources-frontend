@@ -20,11 +20,11 @@ jest.mock('react-router-dom', () => ({
 }));
 
 // dayJs is an absolute pain, just mock it.
-jest.mock('dayjs', () =>
-  jest.fn(() => ({
-    fromNow: () => '2024-01-22',
-  })),
-);
+jest.mock('dayjs', () => () => ({
+  fromNow: () => '2024-01-22',
+  format: () => '2024-01-22',
+  isBefore: () => false,
+}));
 
 it('expect Set snapshot date step to render dates', () => {
   (useGetSnapshotsByDates as jest.Mock).mockImplementation(() => ({

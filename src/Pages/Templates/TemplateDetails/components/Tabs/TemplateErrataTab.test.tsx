@@ -13,7 +13,11 @@ jest.mock('react-router-dom', () => ({
   Outlet: () => <></>,
 }));
 
-jest.mock('dayjs', () => (value) => ({ fromNow: () => value, format: () => value }));
+jest.mock('dayjs', () => (value) => ({
+  fromNow: () => value,
+  format: () => value,
+  isBefore: () => value,
+}));
 
 jest.mock('Hooks/useRootPath', () => () => 'someUrl');
 

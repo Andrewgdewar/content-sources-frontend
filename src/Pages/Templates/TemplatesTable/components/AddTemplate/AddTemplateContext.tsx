@@ -11,7 +11,7 @@ import { TemplateRequest } from 'services/Templates/TemplateApi';
 import { QueryClient, useQueryClient } from 'react-query';
 import { useContentListQuery, useRepositoryParams } from 'services/Content/ContentQueries';
 import { ContentOrigin, NameLabel } from 'services/Content/ContentApi';
-import { formatApiTemplateTime, hardcodeRedHatReposByArchAndVersion } from '../templateHelpers';
+import { hardcodeRedHatReposByArchAndVersion } from '../templateHelpers';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useFetchTemplate } from 'services/Templates/TemplateQueries';
 import useRootPath from 'Hooks/useRootPath';
@@ -124,7 +124,6 @@ export const AddTemplateContextProvider = ({ children }: { children: ReactNode }
     if (uuid && !!editTemplateData && !isLoading && !!existingRepositoryInformation) {
       const startingState = {
         ...editTemplateData,
-        date: formatApiTemplateTime(editTemplateData.date),
       };
 
       setTemplateRequest(startingState);

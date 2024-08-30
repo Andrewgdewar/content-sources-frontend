@@ -1,4 +1,4 @@
-import { formatApiTemplateTime, hardcodeRedHatReposByArchAndVersion } from './templateHelpers';
+import { hardcodeRedHatReposByArchAndVersion } from './templateHelpers';
 
 it('Test hardcodeRedHatReposByArchAndVersion', () => {
   let result = hardcodeRedHatReposByArchAndVersion('x86_64', '8') as string[];
@@ -11,10 +11,4 @@ it('Test hardcodeRedHatReposByArchAndVersion', () => {
 
   result = hardcodeRedHatReposByArchAndVersion('stuff', '12') as string[];
   expect(result).toBeUndefined();
-});
-
-it('formatApiTemplateTime', () => {
-  const result = formatApiTemplateTime('2021-22-01T-things-weDontWantzzzzz');
-  expect(result).toHaveLength(10);
-  expect(result).toEqual('2021-22-01');
 });

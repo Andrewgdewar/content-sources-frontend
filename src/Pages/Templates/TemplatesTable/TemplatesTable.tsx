@@ -32,7 +32,7 @@ import { useDeleteTemplateItemMutate, useTemplateList } from 'services/Templates
 import ConditionalTooltip from 'components/ConditionalTooltip/ConditionalTooltip';
 import { useAppContext } from 'middleware/AppContext';
 import TemplateFilters from './components/TemplateFilters';
-import { formatDateDDMMMYYYY } from 'helpers';
+import { formatDateDDMMMYYYY, formatDateUTC } from 'helpers';
 import { useQueryClient } from 'react-query';
 import Header from 'components/Header/Header';
 import useRootPath from 'Hooks/useRootPath';
@@ -286,7 +286,16 @@ const TemplatesTable = () => {
                       <Td>{description}</Td>
                       <Td>{archesDisplay(arch)}</Td>
                       <Td>{versionDisplay(version)}</Td>
-                      <Td>{use_latest ? 'Use latest' : formatDateDDMMMYYYY(date)}</Td>
+                      <Td>
+                        <ConditionalTooltip
+                          show={!use_latest}
+                          content={formatDateUTC(date)}
+                          position='top-start'
+                          enableFlip
+                        >
+                          <p>{use_latest ? 'Use latest' : formatDateDDMMMYYYY(date)}</p>
+                        </ConditionalTooltip>
+                      </Td>
                       <Td>
                         <ConditionalTooltip
                           content='You do not have the required permissions to perform this action.'

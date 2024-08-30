@@ -27,3 +27,5 @@ yarn-error.log*
 coverage
 
 .env
+
+*storybook.log
