@@ -1,12 +1,12 @@
 import { Button } from '@patternfly/react-core';
 
 import type { Meta, StoryObj } from '@storybook/react';
-import FileUploader from '../components/FileUploader/FileUploader';
+import FileUploader from '../Pages/Repositories/ContentListTable/components/UploadContent/compontents/FileUploader';
 
 // More on how to set up stories at: https://storybook.js.org/docs/writing-stories#default-export
 const meta = {
   title: 'Components',
-  component: FileUploader,
+  component: () => <FileUploader setFileUUIDs={console.log} isLoading={false} />,
   decorators: [
     (Story) => (
       <div style={{ justifyContent: 'center', display: 'flex', paddingTop: '20vh' }}>

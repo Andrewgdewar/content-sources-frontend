@@ -38,6 +38,8 @@ import {
   ErrataResponse,
   type EditContentRequestItem,
   type ValidateContentRequestItem,
+  addUploads,
+  type AddUploadRequest,
 } from './ContentApi';
 import { ADMIN_TASK_LIST_KEY } from '../AdminTasks/AdminTaskQueries';
 import useErrorNotification from 'Hooks/useErrorNotification';
@@ -69,9 +71,9 @@ const buildContentListKey = (
     '',
   )}${filterData?.statuses?.join('')}${filterData?.availableForArch}${filterData?.availableForVersion}${filterData?.searchQuery}`;
 
-export const useFetchContent = (uuids: string[], enabled = true) => {
+export const useFetchContent = (uuid: string, enabled = true) => {
   const errorNotifier = useErrorNotification();
-  return useQuery<ContentItem>([CONTENT_ITEM_KEY, ...uuids], () => fetchContentItem(uuids[0]), {
+  return useQuery<ContentItem>([CONTENT_ITEM_KEY, uuid], () => fetchContentItem(uuid), {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (err: any) =>
       errorNotifier(
@@ -175,6 +177,37 @@ export const useAddContentQuery = (request: CreateContentRequest) => {
         'An error occurred',
         err,
         'add-content-error',
+      );
+    },
+  });
+};
+
+export const useAddUploadsQuery = (request: AddUploadRequest) => {
+  const queryClient = useQueryClient();
+  const errorNotifier = useErrorNotification();
+  const { notify } = useNotification();
+  return useMutation(() => addUploads(request), {
+    onSuccess: (data) => {
+      notify({
+        variant: AlertVariant.success,
+        title:
+          request.uploads.length > 1
+            ? `${request.uploads.length} rpms successfully uploaded to ${data.repository_name}`
+            : `One rpm successfully uploaded to ${data.repository_name}`,
+        description: 'This repository will be snapshotted shortly',
+        id: 'add-upload-success',
+      });
+
+      queryClient.invalidateQueries(CONTENT_LIST_KEY);
+      queryClient.invalidateQueries(ADMIN_TASK_LIST_KEY);
+    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onError: (err: any) => {
+      errorNotifier(
+        'Error uploading rpms to this repository',
+        'An error occurred',
+        err,
+        'add-upload-error',
       );
     },
   });

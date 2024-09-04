@@ -51,7 +51,7 @@ import ConditionalTooltip from 'components/ConditionalTooltip/ConditionalTooltip
 import dayjs from 'dayjs';
 import ChangedArrows from './components/SnapshotListModal/components/ChangedArrows';
 import { Outlet, useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
-import { ADD_ROUTE, DELETE_ROUTE, EDIT_ROUTE } from 'Routes/constants';
+import { ADD_ROUTE, DELETE_ROUTE, EDIT_ROUTE, UPLOAD_ROUTE } from 'Routes/constants';
 import UploadRepositoryLabel from 'components/UploadRepositoryLabel/UploadRepositoryLabel';
 
 const useStyles = createUseStyles({
@@ -317,9 +317,20 @@ const ContentListTable = () => {
               isDisabled: actionTakingPlace || rowData?.status === 'Pending',
               title: 'Edit',
               onClick: () => {
-                navigate(`${EDIT_ROUTE}?repoUUIDS=${rowData.uuid}`);
+                navigate(`${rowData.uuid}/${EDIT_ROUTE}`);
               },
             },
+            ...(rowData.origin === ContentOrigin.UPLOAD
+              ? [
+                  {
+                    isDisabled: actionTakingPlace || rowData?.status === 'Pending',
+                    title: 'Upload content',
+                    onClick: () => {
+                      navigate(`${rowData.uuid}/${UPLOAD_ROUTE}`);
+                    },
+                  },
+                ]
+              : []),
             ...(features?.snapshots?.accessible
               ? [
                   {
@@ -444,19 +455,22 @@ const ContentListTable = () => {
 
   return (
     <>
-      <Outlet
-        context={{
-          clearCheckedRepositories,
-          deletionContext: {
-            page,
-            perPage,
-            filterData,
-            contentOrigin,
-            sortString: sortString,
-            checkedRepositories,
-          },
-        }}
-      />
+      {/* This ensures that the modal doesn't temporarily flash on initial render */}
+      <Hide hide={isLoading}>
+        <Outlet
+          context={{
+            clearCheckedRepositories,
+            deletionContext: {
+              page,
+              perPage,
+              filterData,
+              contentOrigin,
+              sortString: sortString,
+              checkedRepositories,
+            },
+          }}
+        />
+      </Hide>
       <Grid
         data-ouia-component-id='content_list_page'
         className={countIsZero ? classes.mainContainer100Height : classes.mainContainer}

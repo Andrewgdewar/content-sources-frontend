@@ -9,6 +9,7 @@ export const DETAILS_ROUTE = 'details';
 export const PACKAGES_ROUTE = 'packages';
 export const ADVISORIES_ROUTE = 'advisories';
 export const EDIT_ROUTE = 'edit';
+export const UPLOAD_ROUTE = 'upload';
 export const ADD_ROUTE = 'add';
 export const DELETE_ROUTE = 'delete';
 // PATCH

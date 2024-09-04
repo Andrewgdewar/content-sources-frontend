@@ -93,7 +93,7 @@ export default function SnapshotListModal() {
     data = { data: [], meta: { count: 0, limit: 20, offset: 0 } },
   } = useGetSnapshotList(uuid as string, page, perPage, sortString);
 
-  const { data: contentData } = useFetchContent([uuid]);
+  const { data: contentData } = useFetchContent(uuid);
 
   useEffect(() => {
     if (isError) {

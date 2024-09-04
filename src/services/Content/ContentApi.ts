@@ -238,6 +238,41 @@ export type IntrospectRepositoryRequestItem = {
   reset_count?: boolean;
 };
 
+export interface UploadResponse {
+  completed: string;
+  created: string;
+  last_updated: string;
+  size: number;
+  upload_uuid: string;
+}
+
+export interface UploadChunkRequest {
+  chunkRange: string;
+  created: string;
+  sha256: string;
+  file: Blob;
+  upload_uuid: string;
+}
+
+export interface AddUploadRequest {
+  uploads: { sha256: string; uuid: string }[];
+  repoUUID: string;
+}
+
+export interface AddUploadResponse {
+  uuid: string;
+  status: string;
+  created_at: string;
+  ended_at: string;
+  error: string;
+  org_id: string;
+  type: string;
+  repository_name: string;
+  repository_uuid: string;
+  dependencies: string[];
+  dependents: string[];
+}
+
 export const getPopularRepositories: (
   page: number,
   limit: number,
@@ -488,6 +523,39 @@ export const getSnapshotErrata: (
       severity: severity.join(','),
       sort_by: sortBy,
     })}`,
+  );
+  return data;
+};
+
+export const createUpload: (size: number) => Promise<UploadResponse> = async (size) => {
+  const { data } = await axios.post('/api/content-sources/v1.0/repositories/uploads/', { size });
+  return data;
+};
+
+export const uploadChunk: (chunkRequest: UploadChunkRequest) => Promise<UploadResponse> = async ({
+  chunkRange,
+  upload_uuid,
+  file,
+  sha256,
+}) => {
+  const formData = new FormData();
+  formData.set('file', file);
+  formData.set('sha256', sha256);
+  const { data } = await axios.post(
+    `/api/content-sources/v1.0/repositories/uploads/${upload_uuid}/upload_chunk/`,
+    formData,
+    { headers: { 'Content-Range': chunkRange } },
+  );
+  return data;
+};
+
+export const addUploads: (chunkRequest: AddUploadRequest) => Promise<AddUploadResponse> = async ({
+  uploads,
+  repoUUID,
+}) => {
+  const { data } = await axios.post(
+    `/api/content-sources/v1.0/repositories/${repoUUID}/add_uploads/`,
+    { uploads },
   );
   return data;
 };

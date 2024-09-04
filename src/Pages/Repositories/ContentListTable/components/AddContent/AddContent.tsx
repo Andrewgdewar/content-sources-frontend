@@ -48,7 +48,7 @@ import ConditionalTooltip from 'components/ConditionalTooltip/ConditionalTooltip
 import { isEmpty, isEqual } from 'lodash';
 import useDeepCompareEffect from 'Hooks/useDeepCompareEffect';
 import useDebounce from 'Hooks/useDebounce';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useContentListOutletContext } from '../../ContentListTable';
 import useRootPath from 'Hooks/useRootPath';
 import CustomHelperText from 'components/CustomHelperText/CustomHelperText';
@@ -92,18 +92,14 @@ interface Props {
 const AddContent = ({ isEdit = false }: Props) => {
   const classes = useStyles();
   const queryClient = useQueryClient();
+  const { repoUUID: uuid } = useParams();
   const navigate = useNavigate();
   const rootPath = useRootPath();
-  const { search } = useLocation();
   const { isProd } = useChrome();
   const isInProd = useMemo(() => isProd(), []);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const uuids = useMemo(
-    () => new URLSearchParams(search).get('repoUUIDS')?.split(',') || [],
-    [search],
-  );
-  const { data, isLoading: isLoadingInitialContent, isSuccess } = useFetchContent(uuids, isEdit);
+  const { data, isLoading: isLoadingInitialContent, isSuccess } = useFetchContent(uuid!, isEdit);
 
   const [values, setValues] = useState(getDefaultValues(isInProd ? { snapshot: false } : {}));
   const [changeVerified, setChangeVerified] = useState(false);

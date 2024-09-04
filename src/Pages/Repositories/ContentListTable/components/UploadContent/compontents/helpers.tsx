@@ -1,11 +1,5 @@
 import CryptoJS from 'crypto-js';
 
-export const MAX_CHUNK_SIZE = 1048576 * 2; // MB
-
-export const BATCH_SIZE = 5;
-
-export const MAX_RETRY_COUNT = 3;
-
 const readSlice = (file: File, start: number, size: number): Promise<Uint8Array> =>
   new Promise<Uint8Array>((resolve, reject) => {
     const fileReader = new FileReader();
@@ -42,6 +36,8 @@ export type Chunk = {
 };
 
 export type FileInfo = {
+  uuid: string;
+  created: string;
   chunks: Chunk[];
   checksum: string;
   error?: string;
@@ -49,14 +45,3 @@ export type FileInfo = {
   failed?: boolean;
   file: File;
 };
-
-const createChanceOfFailure = (chance: number) => chance <= Math.random();
-
-// This simulates api call time
-export const callAPI = (callback: () => void, chanceOfSuccess = 1): Promise<void> =>
-  new Promise((resolved, reject) => {
-    if (createChanceOfFailure(chanceOfSuccess)) {
-      return reject('Something went wrong!');
-    }
-    return setTimeout(() => resolved(callback()), 500);
-  });

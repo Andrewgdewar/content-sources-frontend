@@ -18,6 +18,7 @@ import {
   SNAPSHOTS_ROUTE,
   SYSTEMS_ROUTE,
   TEMPLATES_ROUTE,
+  UPLOAD_ROUTE,
 } from './constants';
 import { useAppContext } from 'middleware/AppContext';
 import TemplateDetails from 'Pages/Templates/TemplateDetails/TemplateDetails';
@@ -37,6 +38,7 @@ import PackageModal from 'Pages/Repositories/ContentListTable/components/Package
 import PopularRepositoriesTable from 'Pages/Repositories/PopularRepositoriesTable/PopularRepositoriesTable';
 import AdminTaskTable from 'Pages/Repositories/AdminTaskTable/AdminTaskTable';
 import ViewPayloadModal from 'Pages/Repositories/AdminTaskTable/components/ViewPayloadModal/ViewPayloadModal';
+import UploadContent from 'Pages/Repositories/ContentListTable/components/UploadContent/UploadContent';
 
 export default function RepositoriesRoutes() {
   const key = useMemo(() => Math.random(), []);
@@ -49,8 +51,17 @@ export default function RepositoriesRoutes() {
           <Route path='' element={<ContentListTable />}>
             {rbac?.repoWrite ? (
               <>
-                <Route key={EDIT_ROUTE} path={EDIT_ROUTE} element={<AddContent isEdit />} />
                 <Route key={ADD_ROUTE} path={ADD_ROUTE} element={<AddContent />} />
+                <Route
+                  key={EDIT_ROUTE}
+                  path={`:repoUUID/${EDIT_ROUTE}`}
+                  element={<AddContent isEdit />}
+                />
+                <Route
+                  key={UPLOAD_ROUTE}
+                  path={`:repoUUID/${UPLOAD_ROUTE}`}
+                  element={<UploadContent />}
+                />
                 <Route key={DELETE_ROUTE} path={DELETE_ROUTE} element={<DeleteContentModal />} />
               </>
             ) : (
