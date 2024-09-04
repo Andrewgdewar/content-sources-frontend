@@ -52,6 +52,7 @@ jest.mock('react-router-dom', () => ({
   useLocation: () => ({
     search: '',
   }),
+  useParams: () => 'banana',
 }));
 
 jest.mock('../../ContentListTable', () => ({
