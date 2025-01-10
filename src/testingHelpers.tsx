@@ -5,10 +5,16 @@ import {
   Meta,
   PopularRepository,
   RepositoryParamsResponse,
+  SnapshotByDateResponse,
+  SnapshotForDate,
   SnapshotItem,
   ValidationResponse,
-} from './services/Content/ContentApi';
-import { AdminTask } from './services/AdminTasks/AdminTaskApi';
+  type ErrataItem,
+  type PackageItem,
+} from 'services/Content/ContentApi';
+import { AdminTask } from 'services/AdminTasks/AdminTaskApi';
+import { TemplateItem } from 'services/Templates/TemplateApi';
+import type { IDSystemItem, SystemItem } from 'services/Systems/SystemsApi';
 
 const queryClient = new QueryClient({
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -75,7 +81,7 @@ export const testRepositoryParamsResponse: RepositoryParamsResponse = {
   ],
 };
 
-export const defaultValidationErrorData: ValidationResponse = [
+export const defaultValidationErrorData: ValidationResponse[] = [
   {
     name: {
       skipped: false,
@@ -93,45 +99,25 @@ export const defaultValidationErrorData: ValidationResponse = [
   },
 ];
 
-export const passingValidationErrorData: ValidationResponse = [
-  {
-    name: {
-      skipped: false,
-      valid: true,
-      error: '',
-    },
-    gpg_key: {
-      skipped: false,
-      valid: true,
-      error: '',
-    },
-    url: {
-      skipped: false,
-      valid: true,
-      error: '',
-      http_code: 200,
-      metadata_present: true,
-      metadata_signature_present: true,
-    },
+export const passingValidationErrorData: ValidationResponse = {
+  name: {
+    skipped: false,
+    valid: true,
+    error: '',
   },
-];
-
-export const defaultContentItem: ContentItem = {
-  uuid: '',
-  name: 'SteveTheRepo',
-  package_count: 100,
-  url: '',
-  status: 'Pending',
-  account_id: '',
-  org_id: 'acme',
-  distribution_arch: '',
-  gpg_key: '',
-  distribution_versions: [''],
-  last_introspection_error: '',
-  last_introspection_time: '2023-03-07 17:13:48.619192 -0500 EST',
-  failed_introspections_count: 0,
-  metadata_verification: false,
-  snapshot: false,
+  gpg_key: {
+    skipped: false,
+    valid: true,
+    error: '',
+  },
+  url: {
+    skipped: false,
+    valid: true,
+    error: '',
+    http_code: 200,
+    metadata_present: true,
+    metadata_signature_present: true,
+  },
 };
 
 export const defaultPopularRepository: PopularRepository = {
@@ -164,6 +150,7 @@ export const defaultIntrospectTask: AdminTask = {
 export const defaultSnapshotTask: AdminTask = {
   ...defaultIntrospectTask,
   typename: 'snapshot',
+  error: 'snapshot failed',
   pulp: {
     sync: {
       syncData: 'syncValue',
@@ -175,6 +162,60 @@ export const defaultSnapshotTask: AdminTask = {
       distributionData: 'distributionValue',
     },
   },
+};
+
+export const defaultContentItem: ContentItem = {
+  uuid: '053603c7-6ef0-4abe-8542-feacb8f7d575',
+  name: 'SteveTheRepo',
+  package_count: 100,
+  url: 'https://stevetheRepo.org/epel/9',
+  status: 'Pending',
+  account_id: '',
+  org_id: 'acme',
+  distribution_arch: 'x86_64',
+  gpg_key: defaultPopularRepository.gpg_key,
+  distribution_versions: ['9'],
+  last_introspection_error: '',
+  last_introspection_time: '2023-03-07 17:13:48.619192 -0500 EST',
+  failed_introspections_count: 0,
+  metadata_verification: false,
+  snapshot: false,
+  module_hotfixes: false,
+  last_snapshot_task: defaultSnapshotTask,
+  last_introspection_status: 'Pending',
+};
+
+export const defaultUpdateTemplateTaskCompleted: AdminTask = {
+  uuid: 'a44540de-b8ce-4843-94ae-53b1f630ca93',
+  status: 'completed',
+  error: '',
+  org_id: '17684632',
+  queued_at: '2024-09-18T20:24:57Z',
+  started_at: '2024-09-18T20:24:57Z',
+  finished_at: '2024-09-18T20:25:57Z',
+  typename: 'update-template-content',
+};
+
+export const defaultUpdateTemplateTaskRunning: AdminTask = {
+  uuid: 'b44540de-b8ce-4843-94ae-53b1f630ca94',
+  status: 'running',
+  error: '',
+  org_id: '17684632',
+  queued_at: '2024-09-18T20:24:57Z',
+  started_at: '2024-09-18T20:24:57Z',
+  finished_at: '',
+  typename: 'update-template-content',
+};
+
+export const defaultUpdateTemplateTaskFailed: AdminTask = {
+  uuid: 'x44540de-b8ce-4843-94ae-53b1f630ca99',
+  status: 'failed',
+  error: 'error',
+  org_id: '17684632',
+  queued_at: '2024-09-18T20:24:57Z',
+  started_at: '2024-09-18T20:24:57Z',
+  finished_at: '2024-09-18T20:25:57Z',
+  typename: 'update-template-content',
 };
 
 export const defaultMetaItem: Meta = {
@@ -190,6 +231,7 @@ export const defaultLinkItem: Links = {
 };
 
 export const defaultSnapshotItem: SnapshotItem = {
+  uuid: '2375c35b-a67a-4ac2-a989-21139433c172',
   created_at: '2023-08-08T20:23:32.711372-06:00',
   distribution_path: 'b68beca3-d081-4c9f-9d8f-9868107c30e2/ea837ff5-62ed-4507-876d-2c600f55df54',
   content_counts: {
@@ -200,11 +242,214 @@ export const defaultSnapshotItem: SnapshotItem = {
     'rpm.packagegroup': 20,
   },
   added_counts: {
-    'rpm.advisory': 3864,
-    'rpm.package': 17208,
+    'rpm.advisory': 100,
+    'rpm.package': 200,
     'rpm.packagecategory': 1,
     'rpm.packageenvironment': 1,
     'rpm.packagegroup': 20,
   },
-  removed_counts: {},
+  removed_counts: {
+    'rpm.advisory': 50,
+    'rpm.package': 50,
+    'rpm.packagecategory': 1,
+    'rpm.packageenvironment': 1,
+    'rpm.packagegroup': 1,
+  },
+  repository_name: 'SteveTheRepo',
+  repository_uuid: '053603c7-6ef0-4abe-8542-feacb8f7d575',
+};
+
+export const defaultContentItemWithSnapshot: ContentItem = {
+  account_id: 'undefined',
+  distribution_arch: 'x86_64',
+  distribution_versions: ['el7'],
+  name: 'AwesomeNamewwyylse12',
+  org_id: '13446804',
+  url: 'https://google.ca/wwyylse12/x86_64/el7',
+  uuid: '3375c35b-a67a-4ac2-a989-21139433c173',
+  package_count: 0,
+  status: '',
+  last_introspection_error: '',
+  last_introspection_time: '',
+  failed_introspections_count: 0,
+  gpg_key: '',
+  metadata_verification: false,
+  snapshot: true,
+  last_snapshot: defaultSnapshotItem,
+  module_hotfixes: false,
+  last_introspection_status: '',
+};
+
+export const defaultTemplateItem: TemplateItem = {
+  uuid: '50412eda-7df5-4fac-8556-278f45e2ef9b',
+  name: 'Billybob!',
+  org_id: '16758779',
+  description: 'Tatata bala tu!',
+  arch: 'aarch64',
+  version: '9',
+  date: '2024-01-22T00:00:00-07:00',
+  repository_uuids: [
+    '31c06bb4-ef1b-42f5-8c91-0ff67e7d8a1b',
+    '28b8d2b1-e4d6-4d8a-be12-1104601fb96e',
+    '053603c7-6ef0-4abe-8542-feacb8f7d575',
+  ],
+  snapshots: [defaultSnapshotItem],
+  to_be_deleted_snapshots: [],
+  use_latest: false,
+  created_at: '2024-01-22T00:00:00-07:00',
+  updated_at: '2024-01-22T00:00:00-07:00',
+  created_by: 'Dudeguy',
+  last_updated_by: 'Dudeguy',
+  last_update_snapshot_error: '',
+  last_update_task_uuid: '60412eda-7df5-4fac-8556-278f45e2ef9c',
+  last_update_task: defaultUpdateTemplateTaskCompleted,
+  rhsm_environment_created: true,
+};
+
+// Template used for testing delete modal where repo is not in any templates
+export const defaultTemplateItem2: TemplateItem = {
+  uuid: '60412eda-7df5-4fac-8556-278f45e2ef9a',
+  name: 'Bettyboop!',
+  org_id: '16758779',
+  description: 'I am not associated with the default repo!',
+  arch: 'aarch64',
+  version: '9',
+  date: '2024-01-22T00:00:00-07:00',
+  repository_uuids: [
+    '31c06bb4-ef1b-42f5-8c91-0ff67e7d8a1b',
+    '28b8d2b1-e4d6-4d8a-be12-1104601fb96e',
+  ],
+  snapshots: [defaultSnapshotItem],
+  to_be_deleted_snapshots: [defaultSnapshotItem],
+  use_latest: false,
+  created_at: '2024-01-22T00:00:00-07:00',
+  updated_at: '2024-01-22T00:00:00-07:00',
+  created_by: 'Dudeguy',
+  last_updated_by: 'Dudeguy',
+  last_update_snapshot_error: '',
+  rhsm_environment_created: true,
+};
+
+export const defaultSnapshotForDateItem: SnapshotForDate = {
+  repository_uuid: defaultContentItem.uuid,
+  is_after: true,
+  match: {
+    uuid: '5fbe7478-50f9-4dc3-b5f2-eb9827bb2752',
+    created_at: '2024-01-23T14:43:49.380795-07:00',
+    repository_path:
+      '096184ac/2b2aad70-d47f-4e15-bcc2-32cb5dc9ea54/bfa35d57-1224-4699-a36e-29ab3b1390f2',
+    content_counts: {
+      'rpm.advisory': 3233,
+      'rpm.modulemd': 754,
+      'rpm.modulemd_defaults': 48,
+      'rpm.package': 27792,
+      'rpm.packagecategory': 5,
+      'rpm.packageenvironment': 2,
+      'rpm.packagegroup': 51,
+      'rpm.repo_metadata_file': 1,
+    },
+    added_counts: {
+      'rpm.advisory': 3233,
+      'rpm.modulemd': 754,
+      'rpm.modulemd_defaults': 48,
+      'rpm.package': 27792,
+      'rpm.packagecategory': 5,
+      'rpm.packageenvironment': 2,
+      'rpm.packagegroup': 51,
+      'rpm.repo_metadata_file': 1,
+    },
+    removed_counts: {},
+    url: '',
+  },
+};
+
+export const defaultSnapshotsByDateResponse: SnapshotByDateResponse = {
+  data: [defaultSnapshotForDateItem],
+};
+
+export const defaultSystemsListItem: SystemItem = {
+  attributes: {
+    display_name: '14867.host.example.com',
+    os: 'RHEL 9.3',
+    rhsm: '',
+    tags: [],
+    last_evaluation: null,
+    rhsa_count: 0,
+    rhba_count: 0,
+    rhea_count: 0,
+    other_count: 0,
+    packages_installed: 0,
+    baseline_name: '',
+    last_upload: '2024-07-22T14:43:58.803303Z',
+    stale_timestamp: '2024-07-14T02:10:37.142532Z',
+    stale_warning_timestamp: '2024-07-21T02:10:37.142532Z',
+    culled_timestamp: '2024-07-28T02:10:37.142532Z',
+    created: '2024-07-12T21:10:37.142509Z',
+    stale: true,
+    satellite_managed: false,
+    built_pkgcache: false,
+    packages_installable: 0,
+    packages_applicable: 0,
+    installable_rhsa_count: 0,
+    installable_rhba_count: 0,
+    installable_rhea_count: 0,
+    installable_other_count: 0,
+    applicable_rhsa_count: 0,
+    applicable_rhba_count: 0,
+    applicable_rhea_count: 0,
+    applicable_other_count: 0,
+    baseline_id: 0,
+    template_name: 'asdf',
+    template_uuid: '2bab9c0c-8518-48f8-bbe3-eb195547f3b6',
+    groups: [],
+    arch: 'x86_64',
+  },
+  id: 'edf803e4-caf3-48f4-b04e-db0eabe495df',
+  type: 'system',
+};
+
+export const defaultTemplateSystemsListItem: IDSystemItem = {
+  attributes: {
+    display_name: 'rhel9.jsherril-lap.example.com',
+    os: 'RHEL 9.3',
+    rhsm: '',
+    installable_rhsa_count: 0,
+    installable_rhba_count: 0,
+    installable_rhea_count: 0,
+    installable_other_count: 0,
+    applicable_rhsa_count: 0,
+    applicable_rhba_count: 0,
+    applicable_rhea_count: 0,
+    applicable_other_count: 0,
+    tags: [],
+    groups: [],
+    last_upload: '2024-07-22T14:41:51.626621Z',
+  },
+  inventory_id: 'c05cb55e-acdd-44c8-b3e3-e21f00e714ff',
+  type: 'system',
+};
+
+export const defaultPackageItem: PackageItem = {
+  name: 'banana-base-libs',
+  arch: 'x86_64',
+  version: '1.2.3',
+  release: '6.el9_fruit',
+  epoch: '0',
+  summary: 'Core libraries for 389 Banana Server',
+};
+
+export const defaultErrataItem: ErrataItem = {
+  id: '0190a44a-fcd3-7aa1-a280-033399516ead',
+  errata_id: 'RHSA-2024:4502',
+  title: 'Important: skopeo security update',
+  summary:
+    'An update for skopeo is now available for Red Hat Enterprise Linux 9.\n\nRed Hat Product Security has rated this update as having a security impact of Important. A Common Vulnerability Scoring System (CVSS) base score, which gives a detailed severity rating, is available for each vulnerability from the CVE link(s) in the References section.',
+  description:
+    'The skopeo command lets you inspect images from container image registries, get images and image layers, and use signatures to create and verify files. \n\nSecurity Fix(es):\n\n* golang-fips/openssl: Memory leaks in code encrypting and decrypting RSA payloads (CVE-2024-1394)\n\nFor more details about the security issue(s), including the impact, a CVSS score, acknowledgments, and other related information, refer to the CVE page(s) listed in the References section.',
+  issued_date: '2024-07-11 11:34:56',
+  updated_date: '2024-07-11 11:34:56',
+  type: 'security',
+  severity: 'Important',
+  reboot_suggested: false,
+  cves: ['CVE-2024-1394'],
 };

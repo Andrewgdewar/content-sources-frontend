@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Features, getFeatures } from './FeatureApi';
-import useErrorNotification from '../../Hooks/useErrorNotification';
+import useErrorNotification from 'Hooks/useErrorNotification';
 
 export const useFetchFeaturesQuery = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -13,7 +13,7 @@ export const useFetchFeaturesQuery = () => {
       features = await getFeatures();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      errorNotifier('Error fetching features', 'An error occurred', err);
+      errorNotifier('Error fetching features', 'An error occurred', err, 'fetch-features-error');
     }
     setIsLoading(false);
     return features;

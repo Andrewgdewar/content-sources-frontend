@@ -1,0 +1,25 @@
+version: 2
+updates:
+  - package-ecosystem: "npm" # See documentation for possible values
+    directory: "/" # Location of package manifests
+    schedule:
+      interval: "weekly"
+    ignore:
+      - dependency-name: "@patternfly/react-core"
+        versions: ["6.x.x"]
+      - dependency-name: "@patternfly/react-icons"
+        versions: ["6.x.x"]
+      - dependency-name: "@patternfly/react-table"
+        versions: ["6.x.x"]
+      - dependency-name: "react-router-dom"
+        versions: ["7.x.x"]
+      - dependency-name: "@redhat-cloud-services/frontend-components-utilities"
+        versions: ["5.x.x"]
+      - dependency-name: "@redhat-cloud-services/frontend-components"
+        versions: ["5.x.x"]
+    commit-message:
+      prefix: "Build: "
+    groups:
+      npm:
+        patterns:
+          - "*"

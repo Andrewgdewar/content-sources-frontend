@@ -14,7 +14,7 @@ const ConditionalTooltip = ({ show, children, setDisabled, ...rest }: Props) =>
       </div>
     </Tooltip>
   ) : (
-    <>{children}</>
+    <div>{children}</div>
   );
 
 export default ConditionalTooltip;

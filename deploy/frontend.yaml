@@ -16,21 +16,24 @@ objects:
           - v1
       frontend:
         paths:
-          - /apps/content-sources  # TODO ensure this matches routes?
+          - /apps/content-sources
       image: ${IMAGE}:${IMAGE_TAG}
       navItems:
         - appId: "content-sources"
           title: "Repositories"
-          href: "/settings/content"
+          href: "/insights/content/repositories"
+          product: "Content"
+        - appId: "content-sources"
+          title: "Templates"
+          href: "/insights/content/templates"
           product: "Content"
       module:
         manifestLocation: "/apps/content-sources/fed-mods.json"
         modules:
-          - id: 'insights-content-sources' # This should likely match: https://github.com/RedHatInsights/cloud-services-config/blob/ci-beta/chrome/fed-modules.json#L776
+          - id: "insights-content-sources"
             module: "./RootApp"
             routes:
-              - pathname: /insights/content  # TODO ensure this matches routes/webpack config?
-              - pathname: /settings/content
+              - pathname: /insights/content
 
 parameters:
   - name: ENV_NAME
@@ -39,3 +42,17 @@ parameters:
     required: true
   - name: IMAGE
     value: quay.io/cloudservices/content-sources-frontend
+  - name: SELENIUM_MEMORY_LIMIT
+    value: 3Gi
+  - name: SELENIUM_CPU_REQUEST
+    value: 100m
+  - name: SELENIUM_MEMORY_REQUEST
+    value: 2Gi
+  - name: SELENIUM_JAVA_OPTS
+    value: ''
+  - name: VNC_GEOMETRY
+    value: '1920x1080'
+  - name: IQE_PARALLEL_ENABLED
+    value: "false"
+  - name: SE_NODE_SESSION_TIMEOUT
+    value: "600"

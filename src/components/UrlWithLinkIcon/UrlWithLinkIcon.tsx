@@ -14,13 +14,14 @@ const useStyles = createUseStyles({
 
 interface Props {
   href: string;
+  customText?: string;
 }
 
-const UrlWithExternalIcon = ({ href }: Props) => {
+const UrlWithExternalIcon = ({ href, customText }: Props) => {
   const classes = useStyles();
   return (
     <a href={href} className={classes.link} rel='noreferrer' target='_blank'>
-      {href} <ExternalLinkAltIcon className={classes.icon} />
+      {customText ? customText : href} <ExternalLinkAltIcon className={classes.icon} />
     </a>
   );
 };

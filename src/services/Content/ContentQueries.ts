@@ -1,6 +1,6 @@
 import { AlertVariant } from '@patternfly/react-core';
 import { useState } from 'react';
-import { QueryClient, useMutation, useQuery } from 'react-query';
+import { QueryClient, useMutation, useQuery, useQueryClient } from 'react-query';
 import { cloneDeep } from 'lodash';
 
 import {
@@ -14,7 +14,6 @@ import {
   FilterData,
   validateContentListItems,
   EditContentListItem,
-  EditContentRequest,
   getGpgKey,
   PackagesResponse,
   getPackages,
@@ -30,29 +29,72 @@ import {
   ErrorResponse,
   getSnapshotList,
   SnapshotListResponse,
+  ContentOrigin,
+  getRepoConfigFile,
+  triggerSnapshot,
+  getSnapshotsByDate,
+  getSnapshotPackages,
+  getSnapshotErrata,
+  ErrataResponse,
+  type EditContentRequestItem,
+  type ValidateContentRequestItem,
+  addUploads,
+  type AddUploadRequest,
+  deleteSnapshots,
+  getLatestRepoConfigFile,
 } from './ContentApi';
 import { ADMIN_TASK_LIST_KEY } from '../AdminTasks/AdminTaskQueries';
-import useErrorNotification from '../../Hooks/useErrorNotification';
-import useNotification from '../../Hooks/useNotification';
+import useErrorNotification from 'Hooks/useErrorNotification';
+import useNotification from 'Hooks/useNotification';
+import {
+  GET_TEMPLATES_KEY,
+  GET_TEMPLATE_PACKAGES_KEY,
+  TEMPLATE_ERRATA_KEY,
+  TEMPLATE_SNAPSHOTS_KEY,
+  TEMPLATES_FOR_SNAPSHOTS,
+} from '../Templates/TemplateQueries';
 
 export const CONTENT_LIST_KEY = 'CONTENT_LIST_KEY';
 export const POPULAR_REPOSITORIES_LIST_KEY = 'POPULAR_REPOSITORIES_LIST_KEY';
 export const REPOSITORY_PARAMS_KEY = 'REPOSITORY_PARAMS_KEY';
 export const CREATE_PARAMS_KEY = 'CREATE_PARAMS_KEY';
 export const PACKAGES_KEY = 'PACKAGES_KEY';
-export const LIST_SNAPSHOTS_KEY = 'PACKAGES_KEY';
+export const SNAPSHOT_PACKAGES_KEY = 'SNAPSHOT_PACKAGES_KEY';
+export const SNAPSHOT_ERRATA_KEY = 'SNAPSHOT_ERRATA_KEY';
+export const LIST_SNAPSHOTS_KEY = 'LIST_SNAPSHOTS_KEY';
 export const CONTENT_ITEM_KEY = 'CONTENT_ITEM_KEY';
+export const REPO_CONFIG_FILE_KEY = 'REPO_CONFIG_FILE_KEY';
+export const LATEST_REPO_CONFIG_FILE_KEY = 'LATEST_REPO_CONFIG_FILE_KEY';
 
 const CONTENT_LIST_POLLING_TIME = 15000; // 15 seconds
 
-export const useFetchContent = (uuids: string[]) => {
+const buildContentListKey = (
+  page: number,
+  limit: number,
+  sortBy?: string,
+  contentOrigin?: ContentOrigin,
+  filterData?: Partial<FilterData>,
+) =>
+  `${page}${limit}${sortBy}${contentOrigin}${filterData?.arches?.join(
+    '',
+  )}${filterData?.versions?.join('')}${filterData?.urls?.join('')}${filterData?.uuids?.join(
+    '',
+  )}${filterData?.statuses?.join('')}${filterData?.availableForArch}${filterData?.availableForVersion}${filterData?.searchQuery}`;
+
+export const useFetchContent = (uuid: string, enabled = true) => {
   const errorNotifier = useErrorNotification();
-  return useQuery<ContentItem>([CONTENT_ITEM_KEY, ...uuids], () => fetchContentItem(uuids[0]), {
+  return useQuery<ContentItem>([CONTENT_ITEM_KEY, uuid], () => fetchContentItem(uuid), {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (err: any) =>
-      errorNotifier('Unable to find associated repository.', 'An error occurred', err),
+      errorNotifier(
+        'Unable to find associated repository.',
+        'An error occurred',
+        err,
+        'fetch-content-error',
+      ),
     keepPreviousData: true,
     staleTime: 20000,
+    enabled,
   });
 };
 
@@ -71,7 +113,12 @@ export const usePopularRepositoriesQuery = (
       staleTime: 20000,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       onError: (err: any) =>
-        errorNotifier('Unable to get popular repositories list', 'An error occurred', err),
+        errorNotifier(
+          'Unable to get popular repositories list',
+          'An error occurred',
+          err,
+          'popular-repository-error',
+        ),
     },
   );
 };
@@ -81,49 +128,36 @@ export const useContentListQuery = (
   limit: number,
   filterData: FilterData,
   sortBy: string,
+  contentOrigin: ContentOrigin = ContentOrigin.CUSTOM,
+  enabled: boolean = true,
+  polling: boolean = false,
 ) => {
-  const [polling, setPolling] = useState(false);
-  const [pollCount, setPollCount] = useState(0);
   const errorNotifier = useErrorNotification();
   return useQuery<ContentListResponse>(
     // Below MUST match the "contentListKeyArray" seen below in the useDeleteContent.
-    [CONTENT_LIST_KEY, page, limit, sortBy, ...Object.values(filterData)],
-    () => getContentList(page, limit, filterData, sortBy),
+    [CONTENT_LIST_KEY, buildContentListKey(page, limit, sortBy, contentOrigin, filterData)],
+    () => getContentList(page, limit, filterData, sortBy, contentOrigin),
     {
-      onSuccess: (data) => {
-        const containsPending = data?.data?.some(
-          ({ status }) => status === 'Pending' || status === '',
-        );
-        if (polling && containsPending) {
-          // Count each consecutive time polling occurs
-          setPollCount(pollCount + 1);
-        }
-        if (polling && !containsPending) {
-          // We were polling, but now the data is valid, we stop the count.
-          setPollCount(0);
-        }
-        if (pollCount > 40) {
-          // If polling occurs 40 times in a row, we stop it. Likely a data/kafka issue has occurred with the API.
-          return setPolling(false);
-        }
-        // This sets the polling state based whether the data contains any "Pending" status
-        return setPolling(containsPending);
-      },
       onError: (err) => {
-        setPolling(false);
-        setPollCount(0);
-        errorNotifier('Unable to get repositories list', 'An error occurred', err);
+        errorNotifier(
+          'Unable to get repositories list',
+          'An error occurred',
+          err,
+          'content-list-error',
+        );
       },
       refetchInterval: polling ? CONTENT_LIST_POLLING_TIME : undefined,
       refetchIntervalInBackground: false, // This prevents endless polling when our app isn't the focus tab in a browser
       refetchOnWindowFocus: polling, // If polling and navigate to another tab, on refocus, we want to poll once more. (This is based off of the stalestime below)
       keepPreviousData: true,
       staleTime: 20000,
+      enabled,
     },
   );
 };
 
-export const useAddContentQuery = (queryClient: QueryClient, request: CreateContentRequest) => {
+export const useAddContentQuery = (request: CreateContentRequest) => {
+  const queryClient = useQueryClient();
   const errorNotifier = useErrorNotification();
   const { notify } = useNotification();
   return useMutation(() => AddContentListItems(request.filter((item) => !!item)), {
@@ -136,9 +170,14 @@ export const useAddContentQuery = (queryClient: QueryClient, request: CreateCont
           request?.length > 1
             ? `${request?.length} custom repositories added`
             : `Custom repository "${request?.[0]?.name}" added`,
-        description: hasPending
-          ? 'Repository introspection in progress'
-          : 'Repository introspection data already available',
+        ...(request[0]?.origin === ContentOrigin.UPLOAD
+          ? {}
+          : {
+              description: hasPending
+                ? 'Repository introspection in progress'
+                : 'Repository introspection data already available',
+            }),
+        id: 'add-content-success',
       });
 
       queryClient.invalidateQueries(CONTENT_LIST_KEY);
@@ -147,7 +186,44 @@ export const useAddContentQuery = (queryClient: QueryClient, request: CreateCont
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (err: any) => {
-      errorNotifier('Error adding items to content list', 'An error occurred', err);
+      errorNotifier(
+        'Error adding items to content list',
+        'An error occurred',
+        err,
+        'add-content-error',
+      );
+    },
+  });
+};
+
+export const useAddUploadsQuery = (request: AddUploadRequest) => {
+  const queryClient = useQueryClient();
+  const errorNotifier = useErrorNotification();
+  const { notify } = useNotification();
+  return useMutation(() => addUploads(request), {
+    onSuccess: (data) => {
+      const uploadCount = (request?.uploads?.length || 0) + (request?.artifacts?.length || 0);
+      notify({
+        variant: AlertVariant.success,
+        title:
+          uploadCount > 1
+            ? `${uploadCount} rpms successfully uploaded to ${data.object_name}`
+            : `One rpm successfully uploaded to ${data.object_name}`,
+        description: 'This repository will be snapshotted shortly',
+        id: 'add-upload-success',
+      });
+
+      queryClient.invalidateQueries(CONTENT_LIST_KEY);
+      queryClient.invalidateQueries(ADMIN_TASK_LIST_KEY);
+    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onError: (err: any) => {
+      errorNotifier(
+        'Error uploading rpms to this repository',
+        'An error occurred',
+        err,
+        'add-upload-error',
+      );
     },
   });
 };
@@ -197,6 +273,7 @@ export const useAddPopularRepositoryQuery = (
         description: hasPending
           ? 'Repository introspection in progress'
           : 'Repository introspection data already available',
+        id: 'add-popular-repo-success',
       });
 
       queryClient.invalidateQueries(CONTENT_LIST_KEY);
@@ -210,37 +287,55 @@ export const useAddPopularRepositoryQuery = (
         };
         queryClient.setQueryData(popularRepositoriesKeyArray, previousData);
       }
-      errorNotifier('Error adding item from popularRepo', 'An error occurred', err);
+      errorNotifier(
+        'Error adding item from popularRepo',
+        'An error occurred',
+        err,
+        'add-popular-repo-error',
+      );
     },
   });
 };
 
-export const useEditContentQuery = (queryClient: QueryClient, request: EditContentRequest) => {
+export const useEditContentQuery = (request: EditContentRequestItem) => {
+  const queryClient = useQueryClient();
   const errorNotifier = useErrorNotification();
   const { notify } = useNotification();
-  return useMutation(() => EditContentListItem(request[0]), {
+  return useMutation(() => EditContentListItem(request), {
     onSuccess: () => {
       notify({
         variant: AlertVariant.success,
-        title: `Successfully edited ${request.length} ${request.length > 1 ? 'items' : 'item'}`,
+        title: `Successfully edited repository ${request.name}`,
+        id: 'edit-content-success',
       });
 
       queryClient.invalidateQueries(CONTENT_LIST_KEY);
+      queryClient.invalidateQueries(CONTENT_ITEM_KEY);
       queryClient.invalidateQueries(ADMIN_TASK_LIST_KEY);
       queryClient.invalidateQueries(POPULAR_REPOSITORIES_LIST_KEY);
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (err: any) => {
-      errorNotifier('Error editing items on content list', 'An error occurred', err);
+      errorNotifier(
+        'Error editing items on content list',
+        'An error occurred',
+        err,
+        'edit-content-error',
+      );
     },
   });
 };
 
 export const useValidateContentList = () => {
   const errorNotifier = useErrorNotification();
-  return useMutation((request: CreateContentRequest) => validateContentListItems(request), {
+  return useMutation((request: ValidateContentRequestItem) => validateContentListItems(request), {
     onError: (err) => {
-      errorNotifier('Error validating form fields', 'An error occurred', err);
+      errorNotifier(
+        'Error validating form fields',
+        'An error occurred',
+        err,
+        'validate-content-error',
+      );
     },
   });
 };
@@ -293,7 +388,12 @@ export const useDeletePopularRepositoryMutate = (
         };
         queryClient.setQueryData(popularRepositoriesKeyArray, previousData);
       }
-      errorNotifier('Unable to delete the given repository.', 'An error occurred', err);
+      errorNotifier(
+        'Unable to delete the given repository.',
+        'An error occurred',
+        err,
+        'delete-popular-repository-error',
+      );
     },
   });
 };
@@ -303,15 +403,13 @@ export const useDeleteContentItemMutate = (
   page: number,
   perPage: number,
   filterData?: FilterData,
+  contentOrigin?: ContentOrigin,
   sortString?: string,
 ) => {
   // Below MUST match the "useContentList" key found above or updates will fail.
   const contentListKeyArray = [
     CONTENT_LIST_KEY,
-    page,
-    perPage,
-    sortString,
-    ...Object.values(filterData || {}),
+    buildContentListKey(page, perPage, sortString, contentOrigin, filterData),
   ];
   const errorNotifier = useErrorNotification();
   return useMutation(deleteContentListItem, {
@@ -361,7 +459,12 @@ export const useDeleteContentItemMutate = (
         };
         queryClient.setQueryData(contentListKeyArray, previousData);
       }
-      errorNotifier('Unable to delete the given repository.', 'An error occurred', err);
+      errorNotifier(
+        'Unable to delete the given repository.',
+        'An error occurred',
+        err,
+        'delete-content-item-error',
+      );
     },
   });
 };
@@ -371,6 +474,7 @@ export const useBulkDeleteContentItemMutate = (
   selected: Set<string>,
   page: number,
   perPage: number,
+  contentOrigin: ContentOrigin,
   filterData?: FilterData,
   sortString?: string,
 ) => {
@@ -378,10 +482,7 @@ export const useBulkDeleteContentItemMutate = (
   // Below MUST match the "useContentList" key found above or updates will fail.
   const contentListKeyArray = [
     CONTENT_LIST_KEY,
-    page,
-    perPage,
-    sortString,
-    ...Object.values(filterData || {}),
+    buildContentListKey(page, perPage, sortString, contentOrigin, filterData),
   ];
   const errorNotifier = useErrorNotification();
   return useMutation(() => deleteContentListItems(uuids), {
@@ -431,7 +532,26 @@ export const useBulkDeleteContentItemMutate = (
         };
         queryClient.setQueryData(contentListKeyArray, previousData);
       }
-      errorNotifier('Error deleting items from content list', 'An error occurred', err);
+      errorNotifier(
+        'Error deleting items from content list',
+        'An error occurred',
+        err,
+        'bulk-delete-error',
+      );
+    },
+  });
+};
+
+export const useGetSnapshotsByDates = (uuids: string[], date: string) => {
+  const errorNotifier = useErrorNotification();
+  return useMutation(() => getSnapshotsByDate(uuids, date), {
+    onError: (err) => {
+      errorNotifier(
+        'Error deleting items from content list',
+        'An error occurred',
+        err,
+        'snapshot-by-date-error',
+      );
     },
   });
 };
@@ -454,7 +574,12 @@ export const useFetchGpgKey = () => {
       gpg_key = data.gpg_key;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      errorNotifier('Error fetching GPG key from provided URL', 'An error occurred', err);
+      errorNotifier(
+        'Error fetching GPG key from provided URL',
+        'An error occurred',
+        err,
+        'fetch-gpgkey-error',
+      );
     }
     setIsLoading(false);
     return gpg_key;
@@ -463,24 +588,23 @@ export const useFetchGpgKey = () => {
   return { fetchGpgKey, isLoading };
 };
 
-export const useGetSnapshotList = (
-  uuid: string,
-  page: number,
-  limit: number,
-  searchQuery: string,
-  sortBy: string,
-) => {
+export const useGetSnapshotList = (uuid: string, page: number, limit: number, sortBy: string) => {
   const errorNotifier = useErrorNotification();
   return useQuery<SnapshotListResponse>(
-    [LIST_SNAPSHOTS_KEY, uuid, page, limit, searchQuery, sortBy],
-    () => getSnapshotList(uuid, page, limit, searchQuery, sortBy),
+    [LIST_SNAPSHOTS_KEY, uuid, page, limit, sortBy],
+    () => getSnapshotList(uuid, page, limit, sortBy),
     {
       keepPreviousData: true,
       optimisticResults: true,
       staleTime: 60000,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       onError: (err: any) => {
-        errorNotifier('Unable to find snapshots with the given UUID.', 'An error occurred', err);
+        errorNotifier(
+          'Unable to find snapshots with the given UUID.',
+          'An error occurred',
+          err,
+          'snapshot-list-error',
+        );
       },
     },
   );
@@ -491,7 +615,7 @@ export const useGetPackagesQuery = (
   page: number,
   limit: number,
   searchQuery: string,
-  sortBy: string,
+  sortBy?: string,
 ) => {
   const errorNotifier = useErrorNotification();
   return useQuery<PackagesResponse>(
@@ -503,29 +627,113 @@ export const useGetPackagesQuery = (
       staleTime: 60000,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       onError: (err: any) => {
-        errorNotifier('Unable to find packages with the given UUID.', 'An error occurred', err);
+        errorNotifier(
+          'Unable to find packages with the given UUID.',
+          'An error occurred',
+          err,
+          'packages-list-error',
+        );
       },
     },
   );
+};
+
+export const useGetSnapshotPackagesQuery = (
+  snap_uuid: string,
+  page: number,
+  limit: number,
+  searchQuery: string,
+) => {
+  const errorNotifier = useErrorNotification();
+  return useQuery<PackagesResponse>(
+    [SNAPSHOT_PACKAGES_KEY, snap_uuid, page, limit, searchQuery],
+    () => getSnapshotPackages(snap_uuid, page, limit, searchQuery),
+    {
+      keepPreviousData: true,
+      optimisticResults: true,
+      staleTime: 60000,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      onError: (err: any) => {
+        errorNotifier(
+          'Unable to find packages with the given UUID.',
+          'An error occurred',
+          err,
+          'snapshot-package-list-error',
+        );
+      },
+    },
+  );
+};
+
+export const useGetSnapshotErrataQuery = (
+  snap_uuid: string,
+  page: number,
+  limit: number,
+  search: string,
+  type: string[],
+  severity: string[],
+  sortBy: string,
+) => {
+  const errorNotifier = useErrorNotification();
+  return useQuery<ErrataResponse>(
+    [SNAPSHOT_ERRATA_KEY, snap_uuid, page, limit, search, type, severity, sortBy],
+    () => getSnapshotErrata(snap_uuid, page, limit, search, type, severity, sortBy),
+    {
+      keepPreviousData: true,
+      optimisticResults: true,
+      staleTime: 60000,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      onError: (err: any) => {
+        errorNotifier(
+          'Unable to find errata with the given UUID.',
+          'An error occurred',
+          err,
+          'snapshot-errata-list-error',
+        );
+      },
+    },
+  );
+};
+
+export const useTriggerSnapshot = (queryClient: QueryClient) => {
+  const errorNotifier = useErrorNotification();
+  const { notify } = useNotification();
+  return useMutation(triggerSnapshot, {
+    onSuccess: () => {
+      notify({
+        variant: AlertVariant.success,
+        title: 'Snapshot triggered successfully',
+        id: 'trigger-snapshot-success',
+      });
+      queryClient.invalidateQueries(CONTENT_LIST_KEY);
+    },
+    onError: (err) => {
+      errorNotifier(
+        'Error triggering snapshot',
+        'An error occurred',
+        err,
+        'trigger-snapshot-error',
+      );
+    },
+  });
 };
 
 export const useIntrospectRepositoryMutate = (
   queryClient: QueryClient,
   page: number,
   perPage: number,
+  contentOrigin: ContentOrigin,
   filterData?: FilterData,
   sortString?: string,
 ) => {
   // Below MUST match the "useContentList" key found above or updates will fail.
   const contentListKeyArray = [
     CONTENT_LIST_KEY,
-    page,
-    perPage,
-    sortString,
-    ...Object.values(filterData || {}),
+    buildContentListKey(page, perPage, sortString, contentOrigin, filterData),
   ];
   const errorNotifier = useErrorNotification();
   const { notify } = useNotification();
+  let hasSnapshottingEnabled: boolean | undefined = false;
   return useMutation(introspectRepository, {
     onMutate: async (item: IntrospectRepositoryRequestItem) => {
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
@@ -546,14 +754,19 @@ export const useIntrospectRepositoryMutate = (
       queryClient.setQueryData(contentListKeyArray, () => ({
         ...newData,
       }));
+
+      hasSnapshottingEnabled = newData.data?.at(0)?.snapshot;
       // Return a context object with the snapshotted value
       return { previousData, queryClient };
     },
     onSuccess: () => {
-      notify({
-        variant: AlertVariant.success,
-        title: 'Repository introspection in progress',
-      });
+      if (!hasSnapshottingEnabled) {
+        notify({
+          variant: AlertVariant.success,
+          title: 'Repository introspection in progress',
+          id: 'introspect-repository-success',
+        });
+      }
       queryClient.invalidateQueries(ADMIN_TASK_LIST_KEY);
     },
     // If the mutation fails, use the context returned from onMutate to roll back
@@ -565,7 +778,119 @@ export const useIntrospectRepositoryMutate = (
         };
         queryClient.setQueryData(contentListKeyArray, previousData);
       }
-      errorNotifier('Error introspecting repository', 'An error occurred', err);
+      errorNotifier(
+        'Error introspecting repository',
+        'An error occurred',
+        err,
+        'introspect-repository-error',
+      );
+    },
+  });
+};
+
+export const useGetRepoConfigFileQuery = (repo_uuid: string, snapshot_uuid: string) => {
+  const errorNotifier = useErrorNotification();
+  return useMutation<string>(
+    [REPO_CONFIG_FILE_KEY, repo_uuid, snapshot_uuid],
+    async () => await getRepoConfigFile(snapshot_uuid),
+    {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      onError: (err: any) => {
+        errorNotifier(
+          'Unable to find config.repo with the given UUID.',
+          'An error occurred',
+          err,
+          'repo-config-error',
+        );
+      },
+    },
+  );
+};
+
+export const useGetLatestRepoConfigFileQuery = (repo_uuid: string) => {
+  const errorNotifier = useErrorNotification();
+  return useMutation<string>(
+    [LATEST_REPO_CONFIG_FILE_KEY, repo_uuid],
+    async () => await getLatestRepoConfigFile(repo_uuid),
+    {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      onError: (err: any) => {
+        errorNotifier(
+          'Unable to find config.repo with the given UUID.',
+          'An error occurred',
+          err,
+          'repo-config-error',
+        );
+      },
+    },
+  );
+};
+
+export const useBulkDeleteSnapshotsMutate = (
+  queryClient: QueryClient,
+  repoUuid: string,
+  selected: Set<string>,
+) => {
+  const uuids = Array.from(selected);
+  const snapshotListKeyArray = [LIST_SNAPSHOTS_KEY, repoUuid];
+  const errorNotifier = useErrorNotification();
+
+  return useMutation(() => deleteSnapshots(repoUuid, uuids), {
+    onMutate: async (checkedSnapshots: Set<string>) => {
+      await queryClient.cancelQueries(snapshotListKeyArray);
+      const previousData: Partial<SnapshotListResponse> =
+        queryClient.getQueryData(snapshotListKeyArray) || {};
+
+      const newMeta = previousData.meta
+        ? {
+            ...previousData.meta,
+            count: previousData.meta.count ? previousData.meta.count - checkedSnapshots.size : 1,
+          }
+        : undefined;
+
+      queryClient.setQueryData(snapshotListKeyArray, () => ({
+        ...previousData,
+        data: previousData.data?.filter((data) => !checkedSnapshots.has(data.uuid)),
+        meta: newMeta,
+      }));
+      return { previousData, newMeta, queryClient };
+    },
+    onSuccess: (_data, _variables, context) => {
+      const { newMeta } = context as {
+        newMeta: Meta;
+      };
+      queryClient.setQueriesData(LIST_SNAPSHOTS_KEY, (data: Partial<SnapshotListResponse> = {}) => {
+        if (data?.meta?.count) {
+          data.meta.count = newMeta?.count;
+        }
+        return data;
+      });
+      queryClient.invalidateQueries(CONTENT_LIST_KEY);
+      queryClient.invalidateQueries(GET_TEMPLATES_KEY);
+      queryClient.invalidateQueries(ADMIN_TASK_LIST_KEY);
+      queryClient.invalidateQueries(TEMPLATE_SNAPSHOTS_KEY);
+      queryClient.invalidateQueries(TEMPLATES_FOR_SNAPSHOTS);
+      queryClient.invalidateQueries(TEMPLATE_ERRATA_KEY);
+      queryClient.invalidateQueries(GET_TEMPLATE_PACKAGES_KEY);
+      queryClient.invalidateQueries(LIST_SNAPSHOTS_KEY);
+      queryClient.invalidateQueries(SNAPSHOT_ERRATA_KEY);
+      queryClient.invalidateQueries(SNAPSHOT_PACKAGES_KEY);
+      queryClient.invalidateQueries(REPO_CONFIG_FILE_KEY);
+      queryClient.invalidateQueries(LATEST_REPO_CONFIG_FILE_KEY);
+    },
+    onError: (err: { response?: { data: ErrorResponse } }, _newData, context) => {
+      if (context) {
+        const { previousData } = context as {
+          previousData: SnapshotListResponse;
+        };
+        queryClient.setQueryData(snapshotListKeyArray, previousData);
+      }
+      errorNotifier(
+        'Error deleting snapshot from the snapshot list',
+        'An error occured',
+        err,
+        'bulk-delete-error',
+      );
     },
   });
 };

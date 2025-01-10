@@ -1,21 +1,28 @@
 {
-  "compilerOptions": {
-    "target": "es5",
-    "isolatedModules": true,
-    "allowJs": true,
-    "checkJs": false,
-    "jsx": "react-jsx",
-    "outDir": "./build",
-    "removeComments": true,
-    "pretty": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "moduleResolution": "node",
-    "esModuleInterop": true,
-    "noImplicitAny": false,
-    "sourceMap": true,
-    "resolveJsonModule": true
-  },
-  "include": ["./src/**/*"],
-  "exclude": ["./node_modules/*", "**/*.js"]
-}
+    "compilerOptions": {
+      "baseUrl": "src",
+      "module": "CommonJS",
+      "target": "ESNext",
+      "isolatedModules": true,
+      "allowJs": true,
+      "checkJs": false,
+      "jsx": "react-jsx",
+      "outDir": "./build",
+      "removeComments": true,
+      "pretty": true,
+      "skipLibCheck": true,
+      "strict": true,
+      "moduleResolution": "node",
+      "esModuleInterop": true,
+      "noImplicitAny": false,
+      "resolveJsonModule": true,
+      "sourceMap": true,
+      "types": ["node", "jest"],
+      "typeRoots": [
+      "./node_modules/@types",
+      ]
+    },
+    "include": ["src/**/*.ts", "**/*.tsx", "**/*"],
+    "exclude": ["./node_modules/*", "**/*.js"]
+  }
+  

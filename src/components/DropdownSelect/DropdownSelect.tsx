@@ -1,71 +1,84 @@
-import { Select, SelectOption, SelectProps, SelectVariant } from '@patternfly/react-core';
-import React, { Dispatch, SetStateAction, useState } from 'react';
+import {
+  Select,
+  MenuToggle,
+  MenuToggleProps,
+  SelectList,
+  SelectOption,
+  type SelectOptionProps,
+  type SelectProps,
+} from '@patternfly/react-core';
+import { createUseStyles } from 'react-jss';
+import { useState, type ReactNode } from 'react';
 
-interface DropdownSelectProps extends Partial<SelectProps> {
-  options: Array<string>;
-  variant: SelectVariant.single | SelectVariant.checkbox | SelectVariant.typeaheadMulti;
-  selectedProp: any; // eslint-disable-line
-  setSelected: Dispatch<SetStateAction<any>>; // eslint-disable-line
-  toggleIcon?: React.ReactElement;
-  placeholderText?: string | React.ReactNode;
+const useStyles = createUseStyles({
+  menuToggle: {
+    maxWidth: 'unset!important', // Remove arbitrary button width
+  },
+});
+
+export interface DropDownSelectProps extends Omit<SelectProps, 'toggle'> {
+  menuValue?: string | ReactNode;
+  dropDownItems?: SelectOptionProps[];
   isDisabled?: boolean;
+  multiSelect?: boolean; // Prevents close behaviour on select
+  menuToggleProps?: Partial<MenuToggleProps | unknown>;
 }
 
-const DropdownSelect = ({
-  options,
-  variant,
-  selectedProp,
-  setSelected,
-  toggleIcon,
-  placeholderText,
+// Use with checkboxes
+export default function DropdownSelect({
+  onSelect = () => undefined,
+  dropDownItems = [],
+  menuValue,
   isDisabled,
+  multiSelect,
+  menuToggleProps,
+  ouiaId,
   ...rest
-}: DropdownSelectProps) => {
-  const selected = Array.isArray(selectedProp) ? selectedProp : [selectedProp];
+}: DropDownSelectProps) {
+  const classes = useStyles();
   const [isOpen, setIsOpen] = useState(false);
-  const onToggle = (isOpen) => setIsOpen(isOpen);
 
-  const selectFrom = options.map((option, index) => (
-    <SelectOption key={option + index} id={option} value={option} />
-  ));
-
-  const onSelect = (_event, selection) => {
-    switch (variant) {
-      case SelectVariant.single:
-        setSelected(selection);
-        setIsOpen(false);
-        break;
-      case SelectVariant.typeaheadMulti:
-      case SelectVariant.checkbox:
-        if (Array.isArray(selectedProp)) {
-          if (selected.includes(selection)) {
-            const remaining = selected.filter((item) => item !== selection);
-            setSelected(remaining);
-            break;
-          }
-          setSelected([...selected, selection]);
-          break;
-        }
-        break;
-    }
+  const onToggleClick = () => {
+    setIsOpen(!isOpen);
   };
 
   return (
-    <Select
-      isDisabled={isDisabled}
-      variant={variant}
-      onSelect={onSelect}
-      selections={selected}
-      isOpen={isOpen}
-      onToggle={onToggle}
-      placeholderText={placeholderText}
-      isCheckboxSelectionBadgeHidden
-      toggleIcon={toggleIcon}
-      {...rest}
+    <div
+      className='pf-v5-c-select'
+      data-ouia-component-type='PF5/Select'
+      data-ouia-safe={true}
+      data-ouia-component-id={ouiaId}
+      // This is necessary to have both the 'pf-v5-c-select' above for QE and no styles applied
+      style={{ all: 'unset' }}
     >
-      {selectFrom}
-    </Select>
+      <Select
+        isOpen={isOpen}
+        onOpenChange={(isOpen: boolean) => setIsOpen(isOpen)}
+        toggle={(toggleRef) => (
+          <MenuToggle
+            ref={toggleRef}
+            isFullWidth
+            isExpanded={isOpen}
+            className={classes.menuToggle}
+            onClick={onToggleClick}
+            isDisabled={isDisabled}
+            {...menuToggleProps}
+          >
+            {menuValue}
+          </MenuToggle>
+        )}
+        onSelect={(_, value) => {
+          onSelect(_, value);
+          if (!multiSelect) setIsOpen(false);
+        }}
+        {...rest}
+      >
+        <SelectList>
+          {dropDownItems.map(({ label, ...props }, index) => (
+            <SelectOption key={label || '' + index} {...props} />
+          ))}
+        </SelectList>
+      </Select>
+    </div>
   );
-};
-
-export default DropdownSelect;
+}

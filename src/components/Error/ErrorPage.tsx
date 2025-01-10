@@ -1,22 +1,15 @@
-import { ErrorBoundary as _ErrorBoundaryPage } from '@redhat-cloud-services/frontend-components';
-
-const ErrorBoundaryPage = _ErrorBoundaryPage as unknown as React.FunctionComponent<{
-  children?: React.ReactNode;
-  headerTitle: string;
-  errorTitle?: string;
-  errorDescription?: string;
-}>;
+import { ErrorBoundary } from '@patternfly/react-component-groups';
 
 interface Props {
   children: React.ReactNode;
 }
 
 export const ErrorPage = ({ children }: Props) => (
-  <ErrorBoundaryPage
-    headerTitle='Content Sources'
+  <ErrorBoundary
+    headerTitle=''
     errorTitle='Unhandled error'
     errorDescription='There was a problem trying to process your request'
   >
     {children}
-  </ErrorBoundaryPage>
+  </ErrorBoundary>
 );

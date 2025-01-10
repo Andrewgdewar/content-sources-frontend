@@ -23,7 +23,6 @@ it('Catch any error in children and show it on the dom', () => {
     { wrapper: BrowserRouter },
   );
 
-  expect(queryByText('Content Sources')).toBeInTheDocument();
   expect(queryByText('There was a problem trying to process your request')).toBeInTheDocument();
   expect(queryByText(errorText)).not.toBeInTheDocument();
   console.error = originalError;

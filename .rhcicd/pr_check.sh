@@ -3,18 +3,18 @@
 # --------------------------------------------
 # Export vars for helper scripts to use
 # --------------------------------------------
-export APP_NAME="content-sources"  # name of app-sre "application" folder this component lives in
-export COMPONENT_NAME="content-sources-frontend"  # name of resourceTemplate component for deploy
+export APP_NAME="content-sources"                # name of app-sre "application" folder this component lives in
+export COMPONENT_NAME="content-sources-frontend" # name of resourceTemplate component for deploy
 # IMAGE should match the quay repo set by app.yaml in app-interface
 export IMAGE="quay.io/cloudservices/content-sources-frontend"
 export WORKSPACE=${WORKSPACE:-$APP_ROOT} # if running in jenkins, use the build's workspace
 export APP_ROOT=$(pwd)
 
-# set NODE_BUILD_VERSION based on nvmrc or default to 16
+# set NODE_BUILD_VERSION based on nvmrc or default to 18
 if [[ -n $(<.nvmrc) ]]; then
-    export NODE_BUILD_VERSION=$(<.nvmrc)
+	export NODE_BUILD_VERSION=$(<.nvmrc)
 else
-    export NODE_BUILD_VERSION=16
+	export NODE_BUILD_VERSION=18
 fi
 
 COMMON_BUILDER=https://raw.githubusercontent.com/RedHatInsights/insights-frontend-builder-common/master
@@ -24,23 +24,30 @@ COMMON_BUILDER=https://raw.githubusercontent.com/RedHatInsights/insights-fronten
 # --------------------------------------------
 export IQE_PLUGINS="content-sources"
 export IQE_MARKER_EXPRESSION="smoke and ui"
-export IQE_FILTER_EXPRESSION=""
+export IQE_FILTER_EXPRESSION="not (subscription or introspection)"
 export IQE_ENV="ephemeral"
 export IQE_SELENIUM="true"
-export IQE_CJI_TIMEOUT="30m"
-export DEPLOY_TIMEOUT="900"  # 15min
+export IQE_CJI_TIMEOUT="60m"
+export DEPLOY_TIMEOUT="1800"
 export DEPLOY_FRONTENDS="true"
+export REF_ENV="insights-stage"
+
+export COMPONENTS_W_RESOURCES="pulp"
+
+# Only deploy one small red hat repo
+EXTRA_DEPLOY_ARGS="--set-parameter content-sources-backend/OPTIONS_REPOSITORY_IMPORT_FILTER=small --set-parameter content-sources-backend/SUSPEND_CRON_JOB=true"
 
 set -exv
 
-source $WORKSPACE/.rhcicd/sonarqube.sh || true
+# source is preferred to | bash -s in this case to avoid a subshell
+source <(curl -sSL $COMMON_BUILDER/src/frontend-build.sh)
+
+# workaround frontend-build.sh setting IMAGE_BUILD, but then bootstrap appending pr-# to it again
+unset IMAGE_TAG
 
 # bootstrap bonfire and it's config
 CICD_URL=https://raw.githubusercontent.com/RedHatInsights/bonfire/master/cicd
-curl -s "$CICD_URL/bootstrap.sh" > .cicd_bootstrap.sh && source .cicd_bootstrap.sh
-
-# source is preferred to | bash -s in this case to avoid a subshell
-source <(curl -sSL $COMMON_BUILDER/src/frontend-build.sh)
+curl -s "$CICD_URL/bootstrap.sh" >.cicd_bootstrap.sh && source .cicd_bootstrap.sh
 
 # reserve ephemeral namespace
 source "${CICD_ROOT}/deploy_ephemeral_env.sh"

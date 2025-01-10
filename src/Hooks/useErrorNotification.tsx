@@ -4,8 +4,13 @@ import useNotification from './useNotification';
 export default function useErrorNotification() {
   const { notify } = useNotification();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const errorNotifier = (defaultTitle: string, defaultDescription: string, err: any) => {
+  const errorNotifier = (
+    defaultTitle: string,
+    defaultDescription: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    err: any,
+    id: string,
+  ) => {
     let title = defaultTitle;
     let description = defaultDescription;
 
@@ -32,6 +37,7 @@ export default function useErrorNotification() {
       variant: AlertVariant.danger,
       title,
       description,
+      id,
     });
   };
 

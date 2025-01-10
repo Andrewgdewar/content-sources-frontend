@@ -1,17 +1,17 @@
 import { render, fireEvent } from '@testing-library/react';
 import DeleteKebab from './DeleteKebab';
 
-jest.mock('../../middleware/AppContext', () => ({
+jest.mock('middleware/AppContext', () => ({
   useAppContext: () => ({ rbac: { read: true, write: true } }),
 }));
 
-it('Render no checked repos', async () => {
+jest.mock('react-router-dom', () => ({
+  useNavigate: jest.fn(),
+}));
+
+it('Render no checked repos', () => {
   const { queryByText } = render(
-    <DeleteKebab
-      atLeastOneRepoChecked={false}
-      numberOfReposChecked={0}
-      deleteCheckedRepos={() => null}
-    />,
+    <DeleteKebab atLeastOneRepoChecked={false} numberOfReposChecked={0} />,
   );
 
   const kebab = document.getElementById('delete-kebab');
@@ -21,14 +21,10 @@ it('Render no checked repos', async () => {
   expect(deleteButton).toHaveAttribute('aria-disabled', 'true');
 });
 
-it('Render with checked repos', async () => {
+it('Render with checked repos', () => {
   const repos = 100;
   const { queryByText } = render(
-    <DeleteKebab
-      atLeastOneRepoChecked={true}
-      numberOfReposChecked={repos}
-      deleteCheckedRepos={() => null}
-    />,
+    <DeleteKebab atLeastOneRepoChecked={true} numberOfReposChecked={repos} />,
   );
 
   const kebab = document.getElementById('delete-kebab');

@@ -1,5 +1,6 @@
 import { Text } from '@patternfly/react-core';
 import {
+  OpenSourceBadge,
   PageHeader as _PageHeader,
   PageHeaderTitle,
 } from '@redhat-cloud-services/frontend-components';
@@ -21,16 +22,33 @@ const useStyles = createUseStyles({
     color: global_Color_100.value,
     paddingTop: '8px',
   },
+  remove100percent: {
+    height: 'unset',
+  },
 });
 
-export default function Header() {
+interface Props {
+  title: string;
+  ouiaId: string;
+  paragraph: string;
+}
+
+export default function Header({ title, ouiaId, paragraph }: Props) {
   const classes = useStyles();
 
   return (
     <PageHeader>
-      <PageHeaderTitle title='Custom Repositories' />
-      <Text className={classes.subtext} ouiaId='custom_repositories_description'>
-        View all custom repositories within your organization.
+      <PageHeaderTitle
+        title={
+          <>
+            {title}
+            <OpenSourceBadge repositoriesURL='https://github.com/content-services/content-sources-frontend' />
+          </>
+        }
+        className={classes.remove100percent}
+      />
+      <Text className={classes.subtext} ouiaId={ouiaId}>
+        {paragraph}
       </Text>
     </PageHeader>
   );

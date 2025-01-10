@@ -4,13 +4,14 @@ import { Provider as ReduxProvider } from 'react-redux';
 import * as Redux from 'redux';
 
 import App from './App';
+import 'index.scss';
 import { ContextProvider } from './middleware/AppContext';
-import { createStore, resetStore } from './store';
+import { createStore, restoreStore } from './store';
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      refetchOnWindowFocus: false, // TODO: Have a conversation about this
+      refetchOnWindowFocus: false,
     },
   },
 });
@@ -21,7 +22,7 @@ interface AppEntryProps {
 
 export default function AppEntry({ logger }: AppEntryProps) {
   const store = React.useMemo(() => {
-    resetStore();
+    restoreStore();
     if (logger) {
       return createStore(logger).store;
     }

@@ -2,9 +2,10 @@ import {
   EmptyStateBody,
   EmptyState,
   EmptyStateVariant,
-  Title,
   EmptyStateIcon,
   Button,
+  EmptyStateHeader,
+  EmptyStateFooter,
 } from '@patternfly/react-core';
 import { SearchIcon, PlusCircleIcon } from '@patternfly/react-icons/dist/js/icons';
 import { createUseStyles } from 'react-jss';
@@ -37,20 +38,25 @@ const EmptyTableState = ({
   const classes = useStyles();
   return (
     <EmptyState variant={EmptyStateVariant.full} className={classes.emptyStateContainer}>
-      <EmptyStateIcon icon={notFiltered ? PlusCircleIcon : SearchIcon} />
-      <Title headingLevel='h2' size='lg' ouiaId='empty_custom_title'>
-        {notFiltered ? `No ${itemName}` : `No ${itemName} match the filter criteria`}
-      </Title>
+      <EmptyStateHeader
+        titleText={
+          <>{notFiltered ? `No ${itemName}` : `No ${itemName} match the filter criteria`}</>
+        }
+        icon={<EmptyStateIcon icon={notFiltered ? PlusCircleIcon : SearchIcon} />}
+        headingLevel='h2'
+      />
       <EmptyStateBody className={classes.emptyStateBody}>
         {notFiltered ? notFilteredBody : 'Clear all filters to show more results'}
       </EmptyStateBody>
-      {notFiltered ? (
-        notFilteredButton
-      ) : (
-        <Button ouiaId='clear_filters' variant='link' onClick={clearFilters}>
-          Clear all filters
-        </Button>
-      )}
+      <EmptyStateFooter>
+        {notFiltered ? (
+          notFilteredButton
+        ) : (
+          <Button ouiaId='clear_filters' variant='link' onClick={clearFilters}>
+            Clear all filters
+          </Button>
+        )}
+      </EmptyStateFooter>
     </EmptyState>
   );
 };

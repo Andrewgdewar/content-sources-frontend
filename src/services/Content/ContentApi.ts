@@ -1,7 +1,11 @@
 import axios from 'axios';
+import { objectToUrlParams } from 'helpers';
+import { AdminTask } from '../AdminTasks/AdminTaskApi';
+import { MAX_CHUNK_SIZE } from 'Pages/Repositories/ContentListTable/components/UploadContent/components/helpers';
 
 export interface ContentItem {
   uuid: string;
+
   name: string;
   package_count: number;
   url: string;
@@ -16,8 +20,13 @@ export interface ContentItem {
   gpg_key: string;
   metadata_verification: boolean;
   snapshot: boolean;
+  module_hotfixes: boolean;
   last_snapshot_uuid?: string;
   last_snapshot?: SnapshotItem;
+  label?: string;
+  origin?: ContentOrigin;
+  last_snapshot_task?: AdminTask;
+  last_introspection_status: string;
 }
 
 export interface PopularRepository {
@@ -32,13 +41,19 @@ export interface PopularRepository {
 }
 
 export interface CreateContentRequestItem {
-  name: string;
-  url: string;
+  name?: string;
+  url?: string;
   distribution_versions?: Array<string>;
   distribution_arch?: string;
   gpg_key?: string;
   metadata_verification?: boolean;
   snapshot?: boolean;
+  module_hotfixes?: boolean;
+  origin?: ContentOrigin;
+}
+
+export interface ValidateContentRequestItem extends CreateContentRequestItem {
+  uuid?: string;
 }
 
 export interface ErrorItem {
@@ -64,9 +79,8 @@ export interface EditContentRequestItem {
   gpg_key: string;
   metadata_verification: boolean;
   snapshot: boolean;
+  module_hotfixes: boolean;
 }
-
-export type EditContentRequest = Array<EditContentRequestItem>;
 
 export type ContentList = Array<ContentItem>;
 
@@ -109,12 +123,16 @@ export type NameLabel = {
   label: string;
 };
 
-export type FilterData = {
+export type FilterData = Partial<{
   searchQuery: string;
   versions: Array<string>;
   arches: Array<string>;
   statuses: Array<string>;
-};
+  uuids: Array<string>;
+  urls: Array<string>;
+  availableForArch: string;
+  availableForVersion: string;
+}>;
 
 export type ValidateItem = {
   skipped: boolean;
@@ -134,21 +152,40 @@ export type ValidationResponse = {
   distribution_versions?: ValidateItem;
   distribution_arch?: ValidateItem;
   gpg_key?: ValidateItem;
-}[];
+};
 
 export interface PackageItem {
   arch: string;
-  checksum: string;
-  epoch: number;
+  epoch: string;
   name: string;
   release: string;
+  checksum?: string;
   summary: string;
-  uuid: string;
   version: string;
+}
+
+export interface ErrataItem {
+  id: string;
+  errata_id: string;
+  title: string;
+  summary: string;
+  description: string;
+  issued_date: string;
+  updated_date: string;
+  type: string;
+  severity: string;
+  reboot_suggested: boolean;
+  cves: string[];
 }
 
 export type PackagesResponse = {
   data: PackageItem[];
+  links: Links;
+  meta: Meta;
+};
+
+export type ErrataResponse = {
+  data: ErrataItem[];
   links: Links;
   meta: Meta;
 };
@@ -159,15 +196,39 @@ export type ContentCounts = {
   'rpm.packagecategory'?: number;
   'rpm.packageenvironment'?: number;
   'rpm.packagegroup'?: number;
+  'rpm.modulemd'?: number;
+  'rpm.modulemd_defaults'?: number;
+  'rpm.repo_metadata_file'?: number;
 };
 
 export interface SnapshotItem {
+  uuid: string;
   created_at: string;
   distribution_path: string;
   content_counts: ContentCounts;
   added_counts: ContentCounts;
   removed_counts: ContentCounts;
+  repository_name: string;
+  repository_uuid: string;
 }
+
+export type SnapshotByDateResponse = {
+  data: SnapshotForDate[];
+};
+
+export type SnapshotForDate = {
+  repository_uuid: string;
+  is_after: boolean;
+  match?: {
+    uuid: string;
+    created_at: string;
+    repository_path: string;
+    content_counts: ContentCounts;
+    added_counts: ContentCounts;
+    removed_counts: ContentCounts;
+    url: string;
+  };
+};
 
 export type SnapshotListResponse = {
   data: SnapshotItem[];
@@ -180,37 +241,101 @@ export type IntrospectRepositoryRequestItem = {
   reset_count?: boolean;
 };
 
+export interface UploadResponse {
+  completed_checksums?: string[];
+  artifact_href?: string;
+  completed?: string;
+  created?: string;
+  last_updated?: string;
+  size: number;
+  upload_uuid?: string;
+}
+
+export interface UploadChunkRequest {
+  chunkRange: string;
+  created: string;
+  sha256: string;
+  file: Blob;
+  upload_uuid: string;
+}
+
+export interface AddUploadRequest {
+  uploads: { sha256: string; uuid: string }[];
+  artifacts: { sha256: string; href: string }[];
+  repoUUID: string;
+}
+
+export interface AddUploadResponse {
+  uuid: string;
+  status: string;
+  created_at: string;
+  ended_at: string;
+  error: string;
+  org_id: string;
+  type: string;
+  object_type: string;
+  object_name: string;
+  object_uuid: string;
+}
+
 export const getPopularRepositories: (
   page: number,
   limit: number,
   filterData?: Partial<FilterData>,
   sortBy?: string,
 ) => Promise<PopularRepositoriesResponse> = async (page, limit, filterData, sortBy) => {
-  const searchQuery = filterData?.searchQuery;
+  const search = filterData?.searchQuery;
   const versionParam = filterData?.versions?.join(',');
   const archParam = filterData?.arches?.join(',');
   const { data } = await axios.get(
-    `/api/content-sources/v1/popular_repositories/?offset=${
-      (page - 1) * limit
-    }&limit=${limit}&search=${searchQuery}&version=${versionParam}&arch=${archParam}&sort_by=${sortBy}`,
+    `/api/content-sources/v1/popular_repositories/?${objectToUrlParams({
+      offset: ((page - 1) * limit).toString(),
+      limit: limit?.toString(),
+      search,
+      version: versionParam,
+      arch: archParam,
+      sort_by: sortBy,
+    })}`,
   );
   return data;
 };
+
+export enum ContentOrigin {
+  'REDHAT' = 'red_hat',
+  'EXTERNAL' = 'external',
+  'UPLOAD' = 'upload',
+  'CUSTOM' = 'external,upload',
+  'ALL' = 'red_hat,external,upload',
+}
 
 export const getContentList: (
   page: number,
   limit: number,
   filterData: FilterData,
   sortBy: string,
-) => Promise<ContentListResponse> = async (page, limit, filterData, sortBy) => {
-  const searchQuery = filterData.searchQuery;
-  const versionParam = filterData.versions.join(',');
-  const archParam = filterData.arches.join(',');
-  const statusParam = filterData?.statuses?.join(',');
+  contentOrigin: ContentOrigin,
+) => Promise<ContentListResponse> = async (page, limit, filterData, sortBy, contentOrigin) => {
+  const search = filterData.searchQuery;
+  const versionParam = filterData.versions?.join(',');
+  const archParam = filterData.arches?.join(',');
+  const statusParam = filterData.statuses?.join(',');
+  const urlParam = filterData.urls?.join(',');
+  const uuidsParam = filterData.uuids?.join(',');
   const { data } = await axios.get(
-    `/api/content-sources/v1/repositories/?offset=${
-      (page - 1) * limit
-    }&limit=${limit}&search=${searchQuery}&version=${versionParam}&status=${statusParam}&arch=${archParam}&sort_by=${sortBy}`,
+    `/api/content-sources/v1/repositories/?${objectToUrlParams({
+      origin: contentOrigin,
+      offset: ((page - 1) * limit).toString(),
+      limit: limit?.toString(),
+      search,
+      version: versionParam,
+      status: statusParam,
+      arch: archParam,
+      sort_by: sortBy,
+      uuid: uuidsParam,
+      url: urlParam,
+      available_for_arch: filterData.availableForArch,
+      available_for_version: filterData.availableForVersion,
+    })}`,
   );
   return data;
 };
@@ -229,6 +354,28 @@ export const deleteContentListItems: (uuids: string[]) => Promise<void> = async 
   uuids: string[],
 ) => {
   const { data } = await axios.post('/api/content-sources/v1/repositories/bulk_delete/', { uuids });
+  return data;
+};
+
+export const deleteSnapshots: (repoUuid: string, uuids: string[]) => Promise<void> = async (
+  repoUuid: string,
+  uuids: string[],
+) => {
+  const { data } = await axios.post(
+    `/api/content-sources/v1/repositories/${repoUuid}/snapshots/bulk_delete/`,
+    { uuids },
+  );
+  return data;
+};
+
+export const getSnapshotsByDate = async (
+  uuids: string[],
+  date: string,
+): Promise<SnapshotByDateResponse> => {
+  const { data } = await axios.post('/api/content-sources/v1/snapshots/for_date/', {
+    repository_uuids: uuids,
+    date,
+  });
   return data;
 };
 
@@ -255,13 +402,12 @@ export const getRepositoryParams: () => Promise<RepositoryParamsResponse> = asyn
 };
 
 export const validateContentListItems: (
-  request: CreateContentRequest,
+  request: ValidateContentRequestItem,
 ) => Promise<ValidationResponse> = async (request) => {
-  const { data } = await axios.post(
-    '/api/content-sources/v1.0/repository_parameters/validate/',
+  const { data } = await axios.post('/api/content-sources/v1.0/repository_parameters/validate/', [
     request,
-  );
-  return data;
+  ]);
+  return data[0];
 };
 
 export const getGpgKey: (url: string) => Promise<GpgKeyResponse> = async (url: string) => {
@@ -276,19 +422,22 @@ export const getPackages: (
   uuid: string,
   page: number,
   limit: number,
-  searchQuery: string,
-  sortBy: string,
+  search: string,
+  sortBy?: string,
 ) => Promise<PackagesResponse> = async (
   uuid: string,
   page: number,
   limit: number,
-  searchQuery: string,
-  sortBy: string,
+  search: string,
+  sortBy?: string,
 ) => {
   const { data } = await axios.get(
-    `/api/content-sources/v1.0/repositories/${uuid}/rpms?offset=${
-      (page - 1) * limit
-    }&limit=${limit}&search=${searchQuery}&sort_by=${sortBy}`,
+    `/api/content-sources/v1.0/repositories/${uuid}/rpms?${objectToUrlParams({
+      offset: ((page - 1) * limit).toString(),
+      limit: limit?.toString(),
+      search,
+      sort_by: sortBy,
+    })}`,
   );
   return data;
 };
@@ -297,19 +446,19 @@ export const getSnapshotList: (
   uuid: string,
   page: number,
   limit: number,
-  searchQuery: string,
   sortBy: string,
 ) => Promise<SnapshotListResponse> = async (
   uuid: string,
   page: number,
   limit: number,
-  searchQuery: string,
   sortBy: string,
 ) => {
   const { data } = await axios.get(
-    `/api/content-sources/v1.0/repositories/${uuid}/snapshots/?offset=${
-      (page - 1) * limit
-    }&limit=${limit}&search=${searchQuery}&sort_by=${sortBy}`,
+    `/api/content-sources/v1.0/repositories/${uuid}/snapshots/?${objectToUrlParams({
+      offset: ((page - 1) * limit).toString(),
+      limit: limit?.toString(),
+      sort_by: sortBy,
+    })}`,
   );
   return data;
 };
@@ -320,6 +469,122 @@ export const introspectRepository: (
   const { data } = await axios.post(
     `/api/content-sources/v1/repositories/${request.uuid}/introspect/`,
     { reset_count: request.reset_count },
+  );
+  return data;
+};
+
+export const triggerSnapshot: (repositoryUUID: string) => Promise<void> = async (
+  repositoryUUID,
+) => {
+  const { data } = await axios.post(
+    `/api/content-sources/v1.0/repositories/${repositoryUUID}/snapshot/`,
+    {},
+  );
+  return data;
+};
+
+export const getRepoConfigFile: (snapshot_uuid: string) => Promise<string> = async (
+  snapshot_uuid,
+) => {
+  const { data } = await axios.get(
+    `/api/content-sources/v1/snapshots/${snapshot_uuid}/config.repo`,
+  );
+  return data;
+};
+
+export const getLatestRepoConfigFile: (repoUUID: string) => Promise<string> = async (repoUUID) => {
+  const { data } = await axios.get(`/api/content-sources/v1/repositories/${repoUUID}/config.repo`);
+  return data;
+};
+
+export const getSnapshotPackages: (
+  snap_uuid: string,
+  page: number,
+  limit: number,
+  searchQuery: string,
+) => Promise<PackagesResponse> = async (
+  snap_uuid: string,
+  page: number,
+  limit: number,
+  searchQuery: string,
+) => {
+  const { data } = await axios.get(
+    `/api/content-sources/v1/snapshots/${snap_uuid}/rpms?${objectToUrlParams({
+      offset: ((page - 1) * limit).toString(),
+      limit: limit?.toString(),
+      search: searchQuery,
+    })}`,
+  );
+  return data;
+};
+
+export const getSnapshotErrata: (
+  snap_uuid: string,
+  page: number,
+  limit: number,
+  search: string,
+  type: string[],
+  severity: string[],
+  sortBy: string,
+) => Promise<ErrataResponse> = async (
+  snap_uuid: string,
+  page: number,
+  limit: number,
+  search: string,
+  type: string[],
+  severity: string[],
+  sortBy: string,
+) => {
+  const { data } = await axios.get(
+    `/api/content-sources/v1/snapshots/${snap_uuid}/errata?${objectToUrlParams({
+      offset: ((page - 1) * limit).toString(),
+      limit: limit?.toString(),
+      search,
+      type: type.join(',').toLowerCase(),
+      severity: severity.join(','),
+      sort_by: sortBy,
+    })}`,
+  );
+  return data;
+};
+
+export const createUpload: (size: number, sha256: string) => Promise<UploadResponse> = async (
+  size,
+  sha256,
+) => {
+  const { data } = await axios.post('/api/content-sources/v1.0/repositories/uploads/', {
+    size,
+    sha256,
+    chunk_size: MAX_CHUNK_SIZE,
+  });
+  return data;
+};
+
+export const uploadChunk: (chunkRequest: UploadChunkRequest) => Promise<UploadResponse> = async ({
+  chunkRange,
+  upload_uuid,
+  file,
+  sha256,
+}) => {
+  const formData = new FormData();
+  formData.set('file', file);
+  formData.set('sha256', sha256);
+  const { data } = await axios.post(
+    `/api/content-sources/v1.0/repositories/uploads/${upload_uuid}/upload_chunk/`,
+    formData,
+    { headers: { 'Content-Range': chunkRange } },
+  );
+  return data;
+};
+
+export const addUploads: (chunkRequest: AddUploadRequest) => Promise<AddUploadResponse> = async ({
+  uploads,
+  artifacts,
+  repoUUID,
+}) => {
+  const { data } = await axios.post(
+    `/api/content-sources/v1.0/repositories/${repoUUID}/add_uploads/`,
+    { uploads, artifacts },
   );
   return data;
 };

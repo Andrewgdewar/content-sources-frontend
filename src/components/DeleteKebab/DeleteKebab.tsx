@@ -1,20 +1,23 @@
-import { Dropdown, DropdownItem, KebabToggle } from '@patternfly/react-core';
+import { Dropdown, DropdownItem, KebabToggle } from '@patternfly/react-core/deprecated';
 import { useState } from 'react';
-import { useAppContext } from '../../middleware/AppContext';
 import ConditionalTooltip from '../ConditionalTooltip/ConditionalTooltip';
+import { useNavigate } from 'react-router-dom';
+import { DELETE_ROUTE } from 'Routes/constants';
 
 interface Props {
   atLeastOneRepoChecked: boolean;
   numberOfReposChecked: number;
-  deleteCheckedRepos: () => void;
+  toggleOuiaId?: string;
+  isDisabled?: boolean;
 }
 
 const DeleteKebab = ({
   atLeastOneRepoChecked,
   numberOfReposChecked,
-  deleteCheckedRepos,
+  toggleOuiaId,
+  isDisabled,
 }: Props) => {
-  const { rbac } = useAppContext();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
 
   const onToggle = (isOpen: boolean) => {
@@ -38,7 +41,7 @@ const DeleteKebab = ({
       show={!atLeastOneRepoChecked}
       setDisabled
     >
-      <DropdownItem onClick={deleteCheckedRepos}>
+      <DropdownItem onClick={() => navigate(DELETE_ROUTE)}>
         {atLeastOneRepoChecked
           ? `Remove ${numberOfReposChecked} repositories`
           : 'Remove selected repositories'}
@@ -49,11 +52,18 @@ const DeleteKebab = ({
   return (
     <Dropdown
       onSelect={onSelect}
-      toggle={<KebabToggle id='delete-kebab' onToggle={onToggle} isDisabled={!rbac?.write} />}
+      toggle={
+        <KebabToggle
+          id='delete-kebab'
+          data-ouia-component-id={toggleOuiaId}
+          onToggle={(_event, isOpen: boolean) => onToggle(isOpen)}
+          isDisabled={isDisabled}
+        />
+      }
       isOpen={isOpen}
       isPlain
       dropdownItems={dropdownItems}
-      direction='up'
+      direction='down'
     />
   );
 };
